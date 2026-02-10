@@ -1,0 +1,1 @@
+import os\nclass GeminiClient:\n    def __init__(self): self.key = os.getenv("GEMINI_API_KEY")\n    def generate(self, prompt): return [{"task": "analyzed", "content": prompt[:50]}]

@@ -1,0 +1,1 @@
+class HFClient:\n    def process(self, data): return {"status": "processed", "data": data}

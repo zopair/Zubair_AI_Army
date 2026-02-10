@@ -1,0 +1,1 @@
+from agents.base_agent import BaseAgent\nfrom brain.state_manager import load_state\ndef main():\n    tasks = load_state("state/tasks.json")\n    print("🤖 Army Executing Tasks...")\nif __name__ == "__main__": main()

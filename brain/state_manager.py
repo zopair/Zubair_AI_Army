@@ -1,0 +1,1 @@
+import json\ndef load_state(path):\n    try:\n        with open(path) as f: return json.load(f)\n    except: return {}\ndef save_state(path, data):\n    with open(path, "w") as f: json.dump(data, f, indent=2)
