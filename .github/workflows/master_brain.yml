@@ -1,0 +1,19 @@
+
+name: Sovereign_Brain_Scheduler
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  orchestration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Gemini Intelligence Check
+        env:
+          GEMINI_KEY: "AIzaSyCje7sIUpxaBnBRfKHtIphjQ4OvQuycsVs"
+        run: |
+          echo "Checking Strategic Priorities..."
+          # هنا سيتم استدعاء سكريبت التخطيط لاحقاً
+    
