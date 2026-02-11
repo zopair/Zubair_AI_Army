@@ -1,0 +1,42 @@
+name: Sovereign_Collective_Brain
+on:
+  push:
+    paths:
+      - 'state/tasks.json'
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  execution:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Army Base
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Collective Brain Sync
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          # تشغيل محرك الذكاء الجماعي
+          python -c "from brain.collective_runtime import CollectiveRuntime; CollectiveRuntime().run()"
+          # تشغيل محرك بناء السرب وتوليد الوكلاء
+          python -c "from brain.swarm_builder import SwarmBuilder; SwarmBuilder().run()"
+          # التنفيذ الرئيسي للمهام
+          python main.py
+
+      - name: Sync Memory to GitHub
+        run: |
+          git config --global user.name "Zubair-Collective-AI"
+          git config --global user.email "alyzopairaly@gmail.com"
+          git add state/ agents/generated/ logs/
+          git commit -m "🧠 Swarm Synced: Collective Intelligence Updated" || echo "No changes"
+          git push
