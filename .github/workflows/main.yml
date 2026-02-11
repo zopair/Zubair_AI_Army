@@ -24,7 +24,7 @@ jobs:
 
       - name: Collective Brain Sync
         env:
-          GEMINI_API_KEY: ${{ AIzaSyCje7sIUpxaBnBRfKHtIphjQ4OvQuycsVs }}
+          GEMINI_API_KEY: ${{AIzaSyCje7sIUpxaBnBRfKHtIphjQ4OvQuycsVs}}
         run: |
           # تشغيل محرك الذكاء الجماعي
           python -c "from brain.collective_runtime import CollectiveRuntime; CollectiveRuntime().run()"
