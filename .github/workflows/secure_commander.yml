@@ -1,0 +1,12 @@
+
+name: Zubair AI Army Secure CI
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Secure Task
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: echo "Executing with secure secrets..."
