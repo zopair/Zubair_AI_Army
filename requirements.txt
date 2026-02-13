@@ -5,3 +5,5 @@ moviepy
 ImageMagick
 
 selenium
+
+selenium

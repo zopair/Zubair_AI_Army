@@ -1,34 +1,19 @@
 
 import os
 import requests
-import google.generativeai as genai
+from google import genai
 
 def fetch_trending_signals():
-    # استخدام Gemini لتحليل التوجهات العالمية بناءً على بيانات اللحظة
-    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    
-    prompt = '''
-    بصفتك محلل بيانات عالمي لشركة الزبير، حدد أهم 3 تريندات (Trends) مالية أو تكنولوجية "ساخنة" الآن في فبراير 2026 
-    يمكن استغلالها لصناعة محتوى مربح أو استثمار سريع. 
-    ركز على الذهب، الذكاء الاصطناعي، والأسواق الناشئة.
-    أعطني النتيجة في شكل نقاط محددة للقائد Prince Sultan.
-    '''
-    
-    response = model.generate_content(prompt)
+    client = genai.Client(api_key=os.environ.get('GOOGLE_API_KEY'))
+    prompt = "أهم 3 تريندات مالية اليوم 13 فبراير 2026 لاستثمار الذهب. لشركة الزبير."
+    response = client.models.generate_content(model="gemini-1.5-flash", contents=prompt)
     return response.text
 
-def alert_leader(trend_report):
-    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = "257288843"
-    msg = f"🏹 **رادار التريندات السيادي (شركة الزبير)**\n\n{trend_report}"
-    
-    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    requests.post(url, json={"chat_id": chat_id, "text": msg, "parse_mode": "Markdown"})
-
 if __name__ == "__main__":
-    signals = fetch_trending_signals()
-    alert_leader(signals)
-    # حفظ الإشارة لاستخدامها من قبل وكيل اليوتيوب لاحقاً
-    with open("streams/finance/signals/latest_trends.txt", "w", encoding="utf-8") as f:
-        f.write(signals)
+    try:
+        signals = fetch_trending_signals()
+        with open("streams/finance/signals/latest_trends.txt", "w", encoding="utf-8") as f:
+            f.write(signals)
+        print("✅ تم صيد التريند بنجاح.")
+    except Exception as e:
+        print(f"❌ فشل الصيد: {e}")
