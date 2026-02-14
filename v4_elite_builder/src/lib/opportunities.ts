@@ -1,0 +1,1 @@
+// Global Job Opportunities Logic
