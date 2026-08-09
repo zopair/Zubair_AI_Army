@@ -1,19 +1,21 @@
 schema: v1
 products:
+  - slug: json-cleaner
+    name: JSON Cleaner
+    category: data-processing
+    status: beta
+    pricing_model: activation-plus-usage
+    featured: true
+    activation_usd: 0.25
+    usage_usd_per_request: 0.01
+    tags: [json, data, api, agents]
   - slug: document-normalize-api
     name: Document Normalize API
     category: data-processing
     status: beta
     pricing_model: usage
-    featured: true
-    tags: [documents, text, api, automation]
-  - slug: json-cleaner
-    name: JSON Cleaner
-    category: data-processing
-    status: prototype
-    pricing_model: usage
     featured: false
-    tags: [json, data, api]
+    tags: [documents, text, api, automation]
   - slug: csv-transformer
     name: CSV Transformer
     category: data-processing
