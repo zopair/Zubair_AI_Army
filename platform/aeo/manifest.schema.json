@@ -1,0 +1,16 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"ZOPAIR Agent Product Manifest",
+  "type":"object",
+  "required":["name","capability","input","output","pricing","interfaces"],
+  "properties":{
+    "name":{"type":"string"},
+    "capability":{"type":"string"},
+    "input":{"type":"string"},
+    "output":{"type":"string"},
+    "pricing":{"type":"object"},
+    "interfaces":{"type":"array","items":{"enum":["REST","OpenAPI","MCP","Webhook"]}},
+    "trust":{"type":"object"},
+    "limits":{"type":"object"}
+  }
+}
