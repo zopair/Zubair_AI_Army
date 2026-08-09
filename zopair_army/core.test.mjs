@@ -33,7 +33,11 @@ assert.equal(army.performance.summary('builder-01', 'coding').successRate, 1);
 const ranked = army.performance.rank(['builder-01'], 'coding');
 assert.equal(ranked[0].successRate, 1);
 
-const retryArmy = new ZopairArmy({ maxAttempts: 2 });
+const retryAgents = [
+  { ...AGENTS[0], id: 'scout-a' },
+  { ...AGENTS[0], id: 'scout-b', reliability: 0.90 },
+];
+const retryArmy = new ZopairArmy({ agents: retryAgents, maxAttempts: 2 });
 const retryTask = {
   id: 't3',
   taskType: 'research',
