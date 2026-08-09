@@ -6,7 +6,7 @@ const army = new ZopairArmy();
 const tasks = [
   { id: 'bench-research', taskType: 'research', capabilities: ['research'], requiredPermissions: ['read:web'] },
   { id: 'bench-code', taskType: 'coding', capabilities: ['coding', 'testing'], requiredPermissions: ['read:repo', 'write:workspace', 'execute:test'] },
-  { id: 'bench-browser', taskType: 'browser', capabilities: ['browser', 'automation'], requiredPermissions: ['read:web', 'network:outbound'] },
+  { id: 'bench-browser', taskType: 'browser', capabilities: ['browser', 'automation'], requiredPermissions: ['read:web', 'network:outbound'], skillApproval: true },
   { id: 'bench-security', taskType: 'security', capabilities: ['security', 'audit'], requiredPermissions: ['read:repo', 'read:policy'] },
 ];
 
