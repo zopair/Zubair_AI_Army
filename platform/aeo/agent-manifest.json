@@ -7,7 +7,7 @@
       "status":"beta",
       "capabilities":["normalize messy text","clean JSON-like payloads","validate normalized output"],
       "protocols":["REST","OpenAPI"],
-      "billing":{"activationUsd":0.25,"usageUsdPerRequest":0.01},
+      "billing":{"model":"prepaid","activationUsd":0.25,"includedRequests":25,"effectiveUnitPriceUsd":0.01},
       "limits":{"requestsPerMinute":60,"maxInputChars":50000},
       "payment":{"provider":"binance_pay","mode":"receive_only","merchantUid":"717654739"},
       "endpoint":"/api/v1/normalize"
