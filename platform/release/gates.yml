@@ -1,0 +1,15 @@
+schema: v1
+gates:
+  paid:
+    - product_health_verified
+    - pricing_defined
+    - usage_metered
+    - payment_provider_verified
+    - refund_path_verified
+    - audit_logging_enabled
+  agent_autonomy:
+    - policy_engine_enabled
+    - kill_switch_verified
+    - spend_limit_verified
+    - secrets_externalized
+    - human_approval_for_money_movement
