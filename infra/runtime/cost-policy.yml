@@ -1,0 +1,17 @@
+version: 1
+execution_order:
+  - local
+  - self_hosted_open_source
+  - free_quota
+  - paid
+paid_requires:
+  revenue_path: true
+  explicit_budget: true
+  provider_health: true
+limits:
+  max_daily_paid_usd: 0
+  max_single_task_usd: 0
+  require_manual_enable: true
+recovery:
+  on_paid_limit: fallback_to_open_source
+  on_provider_failure: fallback_provider
