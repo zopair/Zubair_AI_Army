@@ -1,9 +1,12 @@
 # Payment Adapter
 
-Binance Pay is the preferred optional crypto checkout adapter for the first revenue MVP.
+Binance Pay is the receive-only payment destination for the first revenue MVP.
 
-The repository contains configuration and safety gates only; it is disabled by default. Production activation requires a Binance merchant account, API credentials stored as secrets, verified webhooks, idempotent order handling, and reconciliation.
+- Merchant UID: `717654739`
+- Customer payments: enabled
+- Agent outbound transfers: disabled
+- Autonomous treasury spending: disabled
+- Automated withdrawals/refunds: disabled
+- MVP verification: manual operator confirmation
 
-Binance publishes official developer documentation and a public `binance-pay-signature-examples` repository. Use only documented endpoints and supported SDK/examples when implementing the live adapter.
-
-Do not place API keys, secrets, wallet seed phrases, or private keys in the repository.
+The live merchant API/webhook adapter remains a later automation step. Do not place API keys, secrets, wallet seed phrases, or private keys in the repository.
