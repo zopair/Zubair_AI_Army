@@ -1,0 +1,18 @@
+{
+  "experiment_id": "ZARE-LIVE-001",
+  "candidate": null,
+  "task_id": null,
+  "started_at": null,
+  "ended_at": null,
+  "gross_revenue_usd": null,
+  "compute_cost_usd": null,
+  "api_cost_usd": null,
+  "platform_fees_usd": null,
+  "human_review_minutes": null,
+  "rework_cost_usd": null,
+  "net_contribution_usd": null,
+  "verified_payment_reference": null,
+  "success": null,
+  "critical_incident": null,
+  "notes": null
+}
