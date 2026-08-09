@@ -1,0 +1,27 @@
+schema: v1
+fixtures:
+  - id: repo_test
+    workload: install-and-test
+  - id: artifact_build
+    workload: build-and-export
+  - id: browser_smoke
+    workload: navigate-extract
+  - id: recovery
+    workload: fail-and-retry
+metrics:
+  - success_rate
+  - p50_latency_ms
+  - p95_latency_ms
+  - cold_start_ms
+  - peak_memory_mb
+  - peak_cpu_pct
+  - artifact_integrity
+  - isolation
+  - operator_steps
+  - estimated_cost
+rules:
+  - identical_fixture_per_provider
+  - no_production_credentials
+  - no_real_money_movement
+  - record_failures
+  - retain_raw_results
