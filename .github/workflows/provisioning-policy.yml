@@ -1,0 +1,24 @@
+name: Provisioning Policy Check
+
+on:
+  push:
+    paths:
+      - 'infra/provisioning/**'
+      - '.github/workflows/provisioning-policy.yml'
+  pull_request:
+    paths:
+      - 'infra/provisioning/**'
+      - '.github/workflows/provisioning-policy.yml'
+  workflow_dispatch:
+
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate policy invariants
+        run: |
+          grep -q 'credential_exfiltration' infra/provisioning/policy.yml
+          grep -q 'bypass_provider_controls' infra/provisioning/policy.yml
+          grep -q 'secrets_externalized' infra/provisioning/healthcheck.json
+          grep -q 'payment_receive_configuration' infra/provisioning/healthcheck.json
