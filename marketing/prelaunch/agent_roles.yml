@@ -1,0 +1,25 @@
+schema: v1
+roles:
+  - id: developer-scout
+    audience: developers
+    job: find relevant communities and questions where a real ZOPAIR capability is useful
+  - id: agent-ecosystem-scout
+    audience: ai-agents
+    job: identify permitted agent/tool discovery surfaces and integration opportunities
+  - id: technical-content
+    audience: developers
+    job: publish useful technical material grounded in measured product capabilities
+  - id: launch-monitor
+    audience: all
+    job: track campaign metrics and flag channels/messages with strong qualified conversion
+  - id: lifecycle
+    audience: waitlist
+    job: send permission-based launch updates and product availability notices
+rules:
+  - do_not_mass_message
+  - do_not_impersonate
+  - do_not_fabricate_reviews
+  - do_not_fabricate_usage_metrics
+  - do_not_claim_unmeasured_performance
+  - obey_platform_rules
+  - stop_on_opt_out
