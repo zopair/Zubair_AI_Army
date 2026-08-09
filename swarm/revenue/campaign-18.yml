@@ -1,0 +1,35 @@
+campaign: zopair-18-product-launch
+objective: generate qualified demand and first sales without spam or platform abuse
+product_count: 18
+strategy:
+  phase_1: create_product_cards_and_public_docs
+  phase_2: publish_search_friendly_problem_solution_pages
+  phase_3: distribute useful technical content tied to each product
+  phase_4: qualify inbound interest
+  phase_5: authorized_one_to_one_outreach_only
+  phase_6: follow_up_and_referral_attribution
+  phase_7: measure_and_kill_low_signal_campaigns
+channels:
+  owned:
+    - github
+    - github_pages
+  discovery:
+    - github_search
+    - public_web
+  social_or_third_party: opt_in_only
+outreach_policy:
+  no_bulk_unsolicited_messages: true
+  no_identity_spoofing: true
+  no_account_creation_to_evade_controls: true
+  respect_platform_terms_and_rate_limits: true
+  require_relevant_context: true
+  max_followups: 2
+metrics:
+  - impressions
+  - qualified_visits
+  - leads
+  - replies
+  - demos
+  - purchases
+  - revenue_usd
+  - referral_conversions
