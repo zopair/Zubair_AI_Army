@@ -1,6 +1,6 @@
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -65,16 +65,16 @@ model RevenueEvent {
 }
 
 model ReferralAttribution {
-  id            String   @id @default(cuid())
-  referralId    String   @unique
-  agentId       String
-  productId     String
-  customerId    String
-  revenueEventId String?  @unique
-  status        String
-  rewardAmount  Float    @default(0)
-  createdAt     DateTime @default(now())
-  expiresAt     DateTime
+  id             String   @id @default(cuid())
+  referralId     String   @unique
+  agentId        String
+  productId      String
+  customerId     String
+  revenueEventId  String?  @unique
+  status         String
+  rewardAmount   Float    @default(0)
+  createdAt      DateTime @default(now())
+  expiresAt      DateTime
 }
 
 model RewardSettlement {
