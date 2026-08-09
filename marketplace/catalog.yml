@@ -1,0 +1,128 @@
+schema: v1
+products:
+  - slug: document-normalize-api
+    name: Document Normalize API
+    category: data-processing
+    status: beta
+    pricing_model: usage
+    featured: true
+    tags: [documents, text, api, automation]
+  - slug: json-cleaner
+    name: JSON Cleaner
+    category: data-processing
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [json, data, api]
+  - slug: csv-transformer
+    name: CSV Transformer
+    category: data-processing
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [csv, data, api]
+  - slug: markdown-cleaner
+    name: Markdown Cleaner
+    category: developer-tools
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [markdown, text, api]
+  - slug: text-deduplicator
+    name: Text Deduplicator
+    category: data-processing
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [text, deduplication, api]
+  - slug: html-to-markdown
+    name: HTML to Markdown
+    category: developer-tools
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [html, markdown, conversion]
+  - slug: document-chunker
+    name: Document Chunker
+    category: ai-infrastructure
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [documents, chunking, llm]
+  - slug: pii-detector
+    name: PII Detector
+    category: security
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [pii, privacy, security]
+  - slug: file-format-validator
+    name: File Format Validator
+    category: developer-tools
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [files, validation, api]
+  - slug: api-response-formatter
+    name: API Response Formatter
+    category: developer-tools
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [api, json, formatting]
+  - slug: log-cleaner
+    name: Log Cleaner
+    category: developer-tools
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [logs, observability, data]
+  - slug: schema-validator
+    name: Data Schema Validator
+    category: developer-tools
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [schema, validation, data]
+  - slug: json-schema-generator
+    name: JSON Schema Generator
+    category: developer-tools
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [json, schema, api]
+  - slug: regex-tester
+    name: Regex Tester API
+    category: developer-tools
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [regex, testing, api]
+  - slug: url-metadata
+    name: URL Metadata Extractor
+    category: web-tools
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [url, metadata, web]
+  - slug: sitemap-analyzer
+    name: Sitemap Analyzer
+    category: web-tools
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [sitemap, seo, web]
+  - slug: webhook-tester
+    name: Webhook Tester
+    category: developer-tools
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [webhook, api, testing]
+  - slug: http-header-analyzer
+    name: HTTP Header Analyzer
+    category: web-tools
+    status: prototype
+    pricing_model: usage
+    featured: false
+    tags: [http, headers, security]
