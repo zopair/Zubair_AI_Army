@@ -1,0 +1,10 @@
+{
+  "schema": "zopair-agent-offer-v1",
+  "program": "agent-referral",
+  "capabilities": ["discover", "refer", "attribute", "reward"],
+  "reward_basis": "verified_net_paid_revenue",
+  "default_reward_rate": 0.10,
+  "settlement_delay_days": 14,
+  "documentation": "/revenue/agent_referrals/README.md",
+  "policy": "/revenue/agent_referrals/referral_policy.json"
+}
