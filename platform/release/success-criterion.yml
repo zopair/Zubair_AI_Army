@@ -1,0 +1,20 @@
+schema: v1
+mvp_success:
+  metric: verified_real_revenue
+  threshold_usd: 0.01
+  requirement: one real customer payment independently verified and recorded in RevenueEvent
+  amount_is_not_the_goal: true
+  after_success:
+    - measure_conversion
+    - fix_friction
+    - expand_distribution
+    - promote_next_product
+
+commercial_loop:
+  - marketplace
+  - checkout
+  - payment_verification
+  - revenue_ledger
+  - api_access
+  - metered_usage
+  - referral_attribution
