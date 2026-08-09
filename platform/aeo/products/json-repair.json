@@ -1,0 +1,10 @@
+{
+  "name":"ZOPAIR JSON Repair",
+  "capability":"repair malformed JSON into valid structured JSON",
+  "input":"malformed_json",
+  "output":"valid_json",
+  "pricing":{"model":"usage","currency":"USD","status":"prototype"},
+  "interfaces":["REST","OpenAPI"],
+  "trust":{"claims":"measured-only"},
+  "limits":{"status":"to-be-measured"}
+}
