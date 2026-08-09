@@ -1,0 +1,25 @@
+{
+  "schema": "v1",
+  "source": "marketplace/catalog.yml",
+  "count": 18,
+  "products": [
+    {"slug":"json-cleaner","name":"JSON Cleaner","status":"beta","sellable":true},
+    {"slug":"document-normalize-api","name":"Document Normalize API","status":"beta","sellable":false},
+    {"slug":"csv-transformer","name":"CSV Transformer","status":"prototype","sellable":false},
+    {"slug":"markdown-cleaner","name":"Markdown Cleaner","status":"prototype","sellable":false},
+    {"slug":"text-deduplicator","name":"Text Deduplicator","status":"prototype","sellable":false},
+    {"slug":"html-to-markdown","name":"HTML to Markdown","status":"prototype","sellable":false},
+    {"slug":"document-chunker","name":"Document Chunker","status":"prototype","sellable":false},
+    {"slug":"pii-detector","name":"PII Detector","status":"prototype","sellable":false},
+    {"slug":"file-format-validator","name":"File Format Validator","status":"prototype","sellable":false},
+    {"slug":"api-response-formatter","name":"API Response Formatter","status":"prototype","sellable":false},
+    {"slug":"log-cleaner","name":"Log Cleaner","status":"prototype","sellable":false},
+    {"slug":"schema-validator","name":"Data Schema Validator","status":"prototype","sellable":false},
+    {"slug":"json-schema-generator","name":"JSON Schema Generator","status":"prototype","sellable":false},
+    {"slug":"regex-tester","name":"Regex Tester API","status":"prototype","sellable":false},
+    {"slug":"url-metadata","name":"URL Metadata Extractor","status":"prototype","sellable":false},
+    {"slug":"sitemap-analyzer","name":"Sitemap Analyzer","status":"prototype","sellable":false},
+    {"slug":"webhook-tester","name":"Webhook Tester","status":"prototype","sellable":false},
+    {"slug":"http-header-analyzer","name":"HTTP Header Analyzer","status":"prototype","sellable":false}
+  ]
+}
