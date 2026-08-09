@@ -1,0 +1,17 @@
+{
+  "schema": "zopair-agent-referral-v1",
+  "qualifying_window_days": 30,
+  "reward_basis": "net_collected_revenue_after_refunds",
+  "default_reward_rate": 0.10,
+  "settlement_delay_days": 14,
+  "per_referral_cap_usd": null,
+  "monthly_partner_cap_usd": null,
+  "eligible_events": ["paid_usage", "paid_subscription"],
+  "excluded_events": ["signup", "impression", "self_referral", "refunded_payment", "chargeback", "fraud_flag"],
+  "anti_abuse": {
+    "self_referral": true,
+    "circular_referral_detection": true,
+    "refund_hold": true,
+    "anomaly_review": true
+  }
+}
