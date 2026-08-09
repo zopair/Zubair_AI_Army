@@ -1,0 +1,27 @@
+campaign: agent-fabric-launch
+objective: first-qualified-lead-and-first-sale
+products:
+  - agent-fabric-starter
+  - json-cleaner
+  - agentops-audit
+  - ci-automation-migration
+channels:
+  discovery:
+    - github
+    - public_web
+  publishing:
+    - github_pages
+    - github_repository
+  outreach: disabled_until_authorized
+limits:
+  max_new_contacts_per_day: 10
+  max_followups_per_contact: 2
+  cooldown_hours: 72
+  require_public_business_context: true
+metrics:
+  - qualified_leads
+  - replies
+  - demos
+  - purchases
+  - revenue_usd
+  - acquisition_cost_usd
