@@ -1,0 +1,9 @@
+id: product-healthcheck
+command: node
+args:
+  - scripts/healthcheck.mjs
+policy:
+  network: none
+  retries: automatic
+  artifacts: capture-on-success
+  secrets: none
