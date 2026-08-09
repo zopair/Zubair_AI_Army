@@ -20,7 +20,8 @@ CANDIDATES = {
     "hummingbot": "https://github.com/hummingbot/hummingbot.git",
 }
 
-
+# The first stage intentionally performs no trading, mining, purchases, or external side effects.
+# It measures reproducible repository/network reachability only.
 def run(cmd: list[str], timeout: int = 90) -> tuple[int, float, str]:
     started = time.perf_counter()
     try:
@@ -40,13 +41,27 @@ def git_probe(name: str, url: str) -> dict:
     }
 
 
+def tool_version_probe() -> dict:
+    probes: dict[str, object] = {}
+    for tool in ("git", "python"):
+        code, seconds, output = run([tool, "--version"], timeout=10)
+        probes[tool] = {"ok": code == 0, "seconds": round(seconds, 3), "output": output.strip()}
+    return probes
+
+
 def main() -> None:
     results = [git_probe(name, url) for name, url in CANDIDATES.items()]
+    ok_count = sum(1 for item in results if item["git_probe_ok"])
     report = {
         "lab": "Zopair Agent Lab v1",
+        "stage": "0-repository-probe",
         "mode": "network/repository smoke probe",
+        "safety": "No trading, mining, purchases, wallet signing, or external side effects",
         "host": platform.platform(),
         "python": platform.python_version(),
+        "git_available": tool_version_probe(),
+        "candidate_count": len(results),
+        "reachable_count": ok_count,
         "results": results,
     }
     out = ROOT / "results.json"
