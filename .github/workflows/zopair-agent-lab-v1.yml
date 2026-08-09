@@ -1,0 +1,26 @@
+name: Zopair Agent Lab v1
+
+on:
+  push:
+    branches:
+      - experiment/zopair-agent-lab-v1
+  workflow_dispatch:
+
+jobs:
+  repository-probes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run repository probes
+        run: python experiments/zopair-agent-lab-v1/benchmark.py
+      - name: Upload probe results
+        uses: actions/upload-artifact@v4
+        with:
+          name: zopair-agent-lab-v1-results
+          path: experiments/zopair-agent-lab-v1/results.json
