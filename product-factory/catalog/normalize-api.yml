@@ -1,0 +1,21 @@
+schema: v1
+name: ZOPAIR Document Normalize API
+status: beta
+category: developer-tool
+summary: Deterministically normalize messy document text through a simple authenticated API.
+keywords:
+  - document normalization api
+  - text cleanup api
+  - whitespace normalization api
+  - developer document processing
+repository: https://github.com/zopair/Zubair_AI_Army
+docs: /app/api/v1/normalize/README.md
+pricing:
+  model: usage
+  unit: 1000-output-characters
+  experiment: true
+promotion:
+  correctness: required
+  security: required
+  reliability: required
+  positive_contribution: required

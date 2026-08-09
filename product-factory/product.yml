@@ -1,0 +1,19 @@
+schema: v1
+name: example-product
+status: prototype
+category: developer-tool
+summary: Replace with a concise statement of the real problem solved.
+keywords:
+  - replace-with-real-search-term
+repository: replace-after-promotion
+demo: replace-after-promotion
+docs: replace-after-promotion
+pricing:
+  model: usage
+  unit: request
+  experiment: true
+promotion:
+  correctness: required
+  security: required
+  reliability: required
+  positive_contribution: required

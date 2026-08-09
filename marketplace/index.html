@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZOPAIR Market — AI, APIs & Developer Tools</title>
+<meta name="description" content="Discover ZOPAIR developer APIs, automation tools and AI infrastructure products.">
+<style>
+body{font-family:system-ui,sans-serif;max-width:1100px;margin:auto;padding:32px;line-height:1.5} header{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap} input{padding:12px;width:min(420px,100%);border:1px solid #ccc;border-radius:8px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:24px}.card{border:1px solid #ddd;border-radius:12px;padding:18px}.tag{display:inline-block;font-size:.8rem;border:1px solid #ddd;border-radius:999px;padding:3px 8px;margin:2px}.status{font-weight:700}.muted{color:#666}a{color:inherit}.hero{padding:32px 0}
+</style>
+</head>
+<body>
+<header><strong>ZOPAIR MARKET</strong><input id="search" placeholder="Search products…" aria-label="Search products"></header>
+<section class="hero"><h1>Build faster with focused developer tools.</h1><p class="muted">Explore APIs, automation utilities and AI infrastructure. Prototype products are clearly marked; paid promotion follows validation.</p></section>
+<div id="catalog" class="grid"></div>
+<script>
+const products=[
+['document-normalize-api','Document Normalize API','data-processing','beta',['documents','text','api','automation']],
+['json-cleaner','JSON Cleaner','data-processing','prototype',['json','data','api']],
+['csv-transformer','CSV Transformer','data-processing','prototype',['csv','data','api']],
+['markdown-cleaner','Markdown Cleaner','developer-tools','prototype',['markdown','text','api']],
+['text-deduplicator','Text Deduplicator','data-processing','prototype',['text','deduplication','api']],
+['html-to-markdown','HTML to Markdown','developer-tools','prototype',['html','markdown','conversion']],
+['document-chunker','Document Chunker','ai-infrastructure','prototype',['documents','chunking','llm']],
+['pii-detector','PII Detector','security','prototype',['pii','privacy','security']],
+['file-format-validator','File Format Validator','developer-tools','prototype',['files','validation','api']],
+['api-response-formatter','API Response Formatter','developer-tools','prototype',['api','json','formatting']],
+['log-cleaner','Log Cleaner','developer-tools','prototype',['logs','observability','data']],
+['schema-validator','Data Schema Validator','developer-tools','prototype',['schema','validation','data']],
+['json-schema-generator','JSON Schema Generator','developer-tools','prototype',['json','schema','api']],
+['regex-tester','Regex Tester API','developer-tools','prototype',['regex','testing','api']],
+['url-metadata','URL Metadata Extractor','web-tools','prototype',['url','metadata','web']],
+['sitemap-analyzer','Sitemap Analyzer','web-tools','prototype',['sitemap','seo','web']],
+['webhook-tester','Webhook Tester','developer-tools','prototype',['webhook','api','testing']],
+['http-header-analyzer','HTTP Header Analyzer','web-tools','prototype',['http','headers','security']]
+];
+function render(q=''){const root=document.querySelector('#catalog');const x=q.toLowerCase();root.innerHTML=products.filter(p=>(p[1]+' '+p[2]+' '+p[4].join(' ')).toLowerCase().includes(x)).map(p=>`<article class="card"><h2>${p[1]}</h2><div class="status">${p[3].toUpperCase()}</div><p class="muted">${p[2]}</p><div>${p[4].map(t=>`<span class="tag">${t}</span>`).join('')}</div></article>`).join('')||'<p>No matching products.</p>'}
+document.querySelector('#search').addEventListener('input',e=>render(e.target.value));render();
+</script>
+</body></html>

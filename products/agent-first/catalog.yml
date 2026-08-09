@@ -1,0 +1,52 @@
+schema: v1
+products:
+  - slug: agent-gateway
+    name: Agent Gateway
+    category: agent-infrastructure
+    status: prototype
+    tags: [mcp, agents, gateway, auth]
+  - slug: tool-health-checker
+    name: Tool Health Checker
+    category: agent-infrastructure
+    status: prototype
+    tags: [testing, observability, agents]
+  - slug: agent-api-inspector
+    name: Agent API Inspector
+    category: developer-tools
+    status: prototype
+    tags: [api, agents, discoverability]
+  - slug: json-repair-api
+    name: JSON Repair API
+    category: data-processing
+    status: prototype
+    tags: [json, repair, api]
+  - slug: structured-extractor
+    name: Structured Extractor
+    category: ai-infrastructure
+    status: prototype
+    tags: [extraction, json, schema]
+  - slug: document-chunking-api
+    name: Document Chunking API
+    category: ai-infrastructure
+    status: prototype
+    tags: [documents, chunking, rag]
+  - slug: pii-redaction-api
+    name: PII Redaction API
+    category: security
+    status: prototype
+    tags: [pii, redaction, privacy]
+  - slug: webhook-reliability-api
+    name: Webhook Reliability API
+    category: developer-tools
+    status: prototype
+    tags: [webhooks, reliability, idempotency]
+  - slug: agent-memory-utilities
+    name: Agent Memory Utilities
+    category: agent-infrastructure
+    status: prototype
+    tags: [memory, context, agents]
+  - slug: agent-evaluation-harness
+    name: Agent Evaluation Harness
+    category: ai-infrastructure
+    status: prototype
+    tags: [evals, testing, agents]
