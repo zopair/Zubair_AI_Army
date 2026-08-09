@@ -55,6 +55,16 @@ assert.equal(retryResult.attempts, 2);
 assert.equal(retryResult.verdict.passed, true);
 assert.ok(retryResult.audit.some(x => x.event === 'agent.selected' && x.attempt === 2));
 
+await assert.rejects(
+  () => army.execute({
+    id: 't4',
+    taskType: 'browser',
+    capabilities: ['browser', 'automation'],
+    requiredPermissions: ['read:web', 'network:outbound'],
+  }, async () => ({ output: 'should-not-run' })),
+  /Skill activation blocked/,
+);
+
 assert.throws(() => selectAgent(AGENTS, {
   id: 'forbidden',
   capabilities: ['coding'],
