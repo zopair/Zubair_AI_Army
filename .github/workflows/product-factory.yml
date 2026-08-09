@@ -1,0 +1,36 @@
+name: Product Factory Smoke
+
+on:
+  push:
+    branches: [feat/zopair-army-core]
+  workflow_dispatch:
+  repository_dispatch:
+    types: [product_factory_smoke]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate factory manifests
+        run: |
+          test -f product-factory/README.md
+          test -f product-factory/product.yml
+          test -f product-factory/PRODUCT_LAUNCH.md
+          test -f revenue/sales_marketing/README.md
+          test -f revenue/sales_marketing/lead_scoring.mjs
+      - name: Run deterministic lead scoring smoke test
+        run: |
+          node --input-type=module <<'NODE'
+          import { scoreLead } from './revenue/sales_marketing/lead_scoring.mjs';
+          const high = scoreLead({fit: 90, intent: 90, engagement: 80, budgetSignal: 80});
+          const low = scoreLead({fit: 10, intent: 10, engagement: 10, budgetSignal: 10});
+          if (high.tier !== 'high' || low.tier !== 'low') process.exit(1);
+          console.log({high, low});
+          NODE
