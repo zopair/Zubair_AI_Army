@@ -1,0 +1,23 @@
+version: 1
+purpose: identify validated developer and AI-agent pain points before building new products
+agents:
+  demand-researcher:
+    inputs: [public_github_issues, public_github_discussions, public_docs, public_trends]
+    outputs: [pain_point, evidence, affected_users, urgency, existing_solutions]
+  competitor-analyst:
+    outputs: [alternatives, gaps, pricing_signals, differentiation]
+  opportunity-scorer:
+    formula: "0.30*frequency + 0.25*urgency + 0.20*buyer_intent + 0.15*solution_gap + 0.10*delivery_feasibility"
+  product-strategist:
+    outputs: [product_idea, target_user, MVP_scope, distribution_channel, validation_test]
+  portfolio-manager:
+    rule: "prioritize evidence-backed opportunities; archive weak ideas"
+  trend-sentinel:
+    outputs: [emerging_tools, deprecated_tools, ecosystem_changes, risks]
+
+rules:
+  - use public information only
+  - record evidence for every demand claim
+  - never manufacture demand signals
+  - prefer small testable products over speculative platforms
+  - stop building when validation fails
