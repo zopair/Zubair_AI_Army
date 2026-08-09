@@ -1,41 +1,69 @@
 # ZOPAIR ARMY — Swarm Core
 
-First vertical slice of the ZOPAIR ARMY execution layer.
+Framework-neutral execution core for a capability-routed agent swarm.
 
-## Design goals
+## Current architecture
 
-- Coordinator/Commander separates planning from execution.
-- Agents are capability-based and scored by fit, reliability, cost, latency and risk.
-- A Judge is independent from the worker that produced the result.
-- Every execution produces an audit record.
-- No external framework is required for the core; adapters can later target LangGraph, AutoGen, CrewAI, MCP, APIs or local tools.
-- Least-privilege permissions are part of agent selection.
+```text
+Intent / Task
+     ↓
+Skill Discovery → Skill Registry
+     ↓
+Capability Router → Permission Gate
+     ↓
+Best Agent (fit + learned performance + cost + latency + risk)
+     ↓
+Execution Adapter
+     ↓
+Independent Judge
+     ↓
+Performance Memory + Audit Trail
+     ↓
+Future routing improves from observed results
+```
 
 ## Initial units
 
 - Scout — discovery/research
-- Builder — implementation
-- Operator — external/API/browser operations
-- Guardian — security and permission review
+- Builder — implementation/testing
+- Operator — API/browser/automation
+- Guardian — security/policy/audit
 - Judge — independent evaluation
-- Commander — task decomposition, routing and final decision
+- Commander — orchestration and final decision
 
-## Architecture
+## Why framework-neutral
 
-```text
-Task -> Commander -> Agent Router -> Worker -> Judge -> Commander -> Result
-                         |                         |
-                    capability score         audit record
-                         |
-                   policy / permissions
-```
+The core deliberately has no mandatory dependency on LangGraph, AutoGen, CrewAI, MCP, a model vendor, or a cloud provider. External frameworks should plug into `ExecutionAdapter` only after being benchmarked against the same task suite. This prevents framework lock-in and lets small/open-source alternatives compete with famous projects on evidence rather than stars.
 
-The core intentionally avoids hard-coding a model vendor or agent framework. This lets ZOPAIR ARMY benchmark multiple orchestration engines instead of becoming locked into one.
+Canonical adapter candidates currently tracked for future experiments:
 
-## Run the smoke test
+- LangGraph: https://github.com/langchain-ai/langgraph
+- CrewAI: https://github.com/crewAIInc/crewAI
+- Microsoft AutoGen ecosystem: https://github.com/microsoft/autogen
+
+These links are research targets, not production dependencies.
+
+## Skills
+
+`skill_registry.mjs` defines capability-oriented skills with explicit permissions and risk classes. Skills answer **how** a task should be performed; tools/adapters answer **with what** it is executed.
+
+## Performance memory
+
+`performance_memory.mjs` records success, cost, latency and risk per agent/task type. The router can use those observations in later selections. This is intentionally lightweight and deterministic; persistent database-backed memory is a later layer.
+
+## Deterministic validation
 
 ```bash
-node zopair_army/core.mjs
+node zopair_army/core.test.mjs
+node zopair_army/benchmark.mjs
 ```
 
-The smoke test is deterministic and uses mock workers, so it does not call external services or spend money.
+The tests and benchmark use a local deterministic adapter. They make no network calls, use no credentials, and spend no money.
+
+## Next experiments
+
+1. Implement one real execution adapter in a sandbox.
+2. Benchmark LangGraph, AutoGen and CrewAI adapters against identical tasks instead of assuming one is best.
+3. Add persistent performance memory through the existing data layer.
+4. Add MCP/Skill discovery with permission and trust inspection before activation.
+5. Add durable checkpointing only after the framework benchmark identifies a clear benefit.
