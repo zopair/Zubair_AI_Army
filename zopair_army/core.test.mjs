@@ -19,6 +19,7 @@ const result = await army.execute({
 assert.equal(result.agent.id, 'builder-01');
 assert.equal(result.skill.id, 'software-build');
 assert.equal(result.verdict.passed, true);
+assert.equal(result.attempts, 1);
 assert.deepEqual(result.audit.map(x => x.event), [
   'task.received',
   'skill.selected',
@@ -31,5 +32,29 @@ assert.equal(army.performance.summary('builder-01', 'coding').successRate, 1);
 
 const ranked = army.performance.rank(['builder-01'], 'coding');
 assert.equal(ranked[0].successRate, 1);
+
+const retryArmy = new ZopairArmy({ maxAttempts: 2 });
+const retryTask = {
+  id: 't3',
+  taskType: 'research',
+  capabilities: ['research'],
+  requiredPermissions: ['read:web'],
+};
+let calls = 0;
+const retryResult = await retryArmy.execute(retryTask, async agent => {
+  calls += 1;
+  if (calls === 1) return { output: '' };
+  return { output: `${agent.id}:recovered` };
+});
+assert.equal(calls, 2);
+assert.equal(retryResult.attempts, 2);
+assert.equal(retryResult.verdict.passed, true);
+assert.ok(retryResult.audit.some(x => x.event === 'agent.selected' && x.attempt === 2));
+
+assert.throws(() => selectAgent(AGENTS, {
+  id: 'forbidden',
+  capabilities: ['coding'],
+  requiredPermissions: ['root:admin'],
+}), /No eligible agent/);
 
 console.log('ZOPAIR ARMY core tests: PASS');
