@@ -6,6 +6,9 @@ on:
       - experiment/zopair-agent-lab-v1
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   repository-probes:
     runs-on: ubuntu-latest
