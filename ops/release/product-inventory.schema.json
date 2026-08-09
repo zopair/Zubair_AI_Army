@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["products"],
+  "properties": {
+    "products": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "status", "delivery", "price"],
+        "properties": {
+          "id": {"type":"string","pattern":"^[a-z0-9-]+$"},
+          "name": {"type":"string","minLength":2},
+          "status": {"enum":["draft","ready","published","paused"]},
+          "delivery": {"enum":["digital","api","service"]},
+          "price": {"type":"number","minimum":0},
+          "checkout_url": {"type":"string"},
+          "target_customer": {"type":"string"},
+          "proof_url": {"type":"string"}
+        }
+      }
+    }
+  }
+}
