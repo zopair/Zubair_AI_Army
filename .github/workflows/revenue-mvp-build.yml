@@ -1,0 +1,32 @@
+name: Revenue MVP Build Gate
+
+on:
+  push:
+    paths:
+      - 'app/**'
+      - 'lib/**'
+      - 'prisma/**'
+      - 'platform/**'
+      - 'package.json'
+      - 'tsconfig.json'
+      - 'next-env.d.ts'
+      - '.github/workflows/revenue-mvp-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: file:./dev.db
+      PAYMENT_CONFIRM_SECRET: ci-only-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm install
+      - run: npx prisma validate
+      - run: npx prisma db push --skip-generate
+      - run: npm test
+      - run: npm run build
