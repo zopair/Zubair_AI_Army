@@ -1,5 +1,6 @@
 import { SkillRegistry, DEFAULT_SKILLS } from './skill_registry.mjs';
 import { AgentPerformanceMemory } from './performance_memory.mjs';
+import { DEFAULT_SKILL_POLICY } from './policy.mjs';
 
 const clamp = (n, min = 0, max = 1) => Math.max(min, Math.min(max, n));
 
@@ -50,11 +51,12 @@ export const createAudit = (event, data = {}) => ({
 });
 
 export class ZopairArmy {
-  constructor({ agents = AGENTS, judge = null, skills = DEFAULT_SKILLS, performance = null, maxAttempts = 2 } = {}) {
+  constructor({ agents = AGENTS, judge = null, skills = DEFAULT_SKILLS, performance = null, maxAttempts = 2, policy = DEFAULT_SKILL_POLICY } = {}) {
     this.agents = agents;
     this.skills = new SkillRegistry(skills);
     this.performance = performance ?? new AgentPerformanceMemory();
     this.maxAttempts = Math.max(1, maxAttempts);
+    this.policy = policy;
     this.judge = judge ?? ((task, result) => ({
       passed: Boolean(result?.output),
       score: result?.output ? 1 : 0,
@@ -75,7 +77,12 @@ export class ZopairArmy {
     const skillCandidates = this.skills.findForTask(task);
     if (!skillCandidates.length) throw new Error(`No eligible skill for task: ${task.id}`);
     const skill = skillCandidates[0].skill;
-    this.log('skill.selected', { taskId: task.id, skillId: skill.id, fit: skillCandidates[0].fit });
+    const policy = this.policy.canActivate(skill, { approval: Boolean(task.skillApproval) });
+    if (!policy.allowed) {
+      this.log('skill.blocked', { taskId: task.id, skillId: skill.id, reason: policy.reason });
+      throw new Error(`Skill activation blocked: ${policy.reason}`);
+    }
+    this.log('skill.selected', { taskId: task.id, skillId: skill.id, fit: skillCandidates[0].fit, policy: policy.reason });
 
     const ranked = rankAgents(this.agents, task, this.performance);
     if (!ranked.length) throw new Error(`No eligible agent for task: ${task.id}`);
@@ -119,10 +126,7 @@ export class ZopairArmy {
       this.log('judge.verdict', { taskId: task.id, agentId: selected.agent.id, attempt: index + 1, ...verdict });
       this.log('performance.updated', { taskId: task.id, agentId: selected.agent.id, success });
 
-      if (success) {
-        return { task, skill, agent: selected.agent, result, verdict, attempts: index + 1, audit: [...this.audit] };
-      }
-
+      if (success) return { task, skill, agent: selected.agent, result, verdict, attempts: index + 1, audit: [...this.audit] };
       lastError = new Error(`Judge rejected result from ${selected.agent.id}: ${verdict.reason ?? 'unknown reason'}`);
     }
 
