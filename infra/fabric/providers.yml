@@ -1,0 +1,30 @@
+schema: v1
+providers:
+  execution:
+    primary: dagger
+    fallbacks:
+      - act
+  ci:
+    primary: github_actions
+    fallback: woodpecker
+  workspace:
+    primary: devpod
+    alternative: coder
+  browser:
+    candidates:
+      - browser_use
+      - stagehand
+      - webagent
+selection:
+  mode: benchmarked
+  no_provider_wins_by_popularity: true
+  required_metrics:
+    - success_rate
+    - p95_latency
+    - cold_start
+    - cpu_memory
+    - reproducibility
+    - isolation
+    - operational_cost
+security:
+  untrusted_prs_on_privileged_runners: forbidden
