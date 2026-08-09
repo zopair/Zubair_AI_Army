@@ -1,0 +1,39 @@
+services:
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:16
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "2222:22"
+    volumes:
+      - forgejo:/data
+
+  runner:
+    image: code.forgejo.org/forgejo/runner:latest
+    restart: unless-stopped
+    depends_on:
+      - forgejo
+    volumes:
+      - runner:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  woodpecker-server:
+    image: woodpeckerci/woodpecker-server:latest
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - woodpecker:/var/lib/woodpecker
+
+  woodpecker-agent:
+    image: woodpeckerci/woodpecker-agent:latest
+    restart: unless-stopped
+    depends_on:
+      - woodpecker-server
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  forgejo:
+  runner:
+  woodpecker:
