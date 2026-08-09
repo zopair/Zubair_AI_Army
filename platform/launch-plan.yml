@@ -1,0 +1,18 @@
+schema: v1
+stages:
+  - id: revenue-mvp
+    status: active
+    gates: [catalog, product-mvp, auth, api, metering, payment]
+  - id: agent-layer
+    status: active
+    gates: [aeo-manifest, openapi, mcp-compatibility, discovery]
+  - id: growth
+    status: active
+    gates: [referral-attribution, waitlist, prelaunch, analytics]
+  - id: product-factory
+    status: active
+    gates: [opportunity-score, automated-build, tests, security, deploy, kill-improve-scale]
+  - id: autonomy
+    status: guarded
+    gates: [policy-engine, audit-log, treasury, wallet, spending-limits, kill-switch]
+principle: ship-one-end-to-end-revenue-loop-before-scaling-product-count
