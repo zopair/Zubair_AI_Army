@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1.0",
+  "publisher": "ZOPAIR",
+  "products": [
+    {"id":"json-cleaner","capabilities":["repair malformed JSON","validate JSON"],"protocols":["REST","OpenAPI"],"billing":"usage"}
+  ],
+  "discovery": {"humanUrl":"/marketplace/", "machineReadable":true}
+}
