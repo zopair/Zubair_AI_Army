@@ -1,44 +1,44 @@
+# 🛡️ Al-Zubair AI Army Protocol
 
-# 🛡️ Al-Zubair AI Army Protocol (جيش الزبير للاستثمار التكنولوجي)
+## Commercial MVP status
+The project is being driven by one measurable MVP goal: **one real, independently verified customer payment**. The amount is not the success metric; a verified payment as small as $0.25 is sufficient to prove the commercial loop.
 
-## 🚀 Vision / الرؤية
-Full automation for high-profit technological investments with 0 EGP budget.
-أتمتة كاملة للاستثمارات التكنولوجية عالية الربحية بميزانية 0 جنيه.
+### First revenue product
+**JSON Cleaner API — Beta**
 
----
+- Starter payment: **$0.25 USD-equivalent**
+- Included usage: **25 prepaid requests**
+- Payment destination: **Binance Pay UID `717654739`**
+- Payment mode: **receive-only**
+- API endpoint: `/api/v1/normalize`
+- API access is issued only after an authorized operator independently verifies the payment.
 
-## 🏰 Repository Structure / هيكل الترسانة
+### Commercial loop
+`Marketplace → Checkout → Binance Pay → Payment Verification → Revenue Ledger → API Key → Prepaid Usage`
 
-### 📡 [V1] Production Radar (رادار القنص)
-- **Purpose:** Logic flaw detection and API security auditing.
-- **Goal:** B2B Security as a Service.
+### Current architecture
+- Next.js App Router
+- Prisma ORM
+- SQLite for the initial persistent MVP runtime
+- Docker
+- GitHub Actions
+- Agent-readable AEO/OpenAPI contracts
+- Revenue Ledger, referral attribution and settlement foundations
+- Guarded agent permissions and kill-switch policy
 
-### 🛍️ [V2] Intelligent Dropshipping (المتجر الذكي)
-- **Purpose:** Automated e-commerce with AI pricing engines.
-- **Goal:** Passive income generation via global suppliers.
+### Important boundary
+Binance Pay is configured **only for receiving customer payments**. Agents cannot withdraw, transfer, spend treasury funds, or issue autonomous refunds.
 
-### 🧠 [V3] Sovereign Core (مركز القيادة)
-- **Purpose:** Kernel protection, AI anomaly detection, and KeyVault.
-- **Goal:** The brain managing all army operations securely.
+## Vision
+Build a multi-product ecosystem where AI agents can discover, evaluate, use, refer and eventually help operate useful developer tools under explicit permission and audit controls.
 
-### 💎 [V4] Elite Pro Builder (المنصة النخبوية)
-- **Purpose:** Professional AI services (CV/LinkedIn) with Crypto payment.
-- **Goal:** High-end retail services and global capital collection.
+## Repository Structure
+- `marketplace/` — product catalog and marketplace surface
+- `app/` — commercial Next.js application and API routes
+- `platform/` — AEO, payments, analytics, product factory and release gates
+- `revenue/` — referral and ledger logic
+- `zopair_army/` — swarm core, learning and benchmark components
+- `docs/` — operating and launch runbooks
 
----
-
-## 🛠️ Tech Stack / الترسانة التقنية
-- **Languages:** TypeScript (98.4%), Python (1.6%).
-- **Frameworks:** Next.js 15, Prisma ORM, Bun.
-- **Infrastructure:** Docker, GitHub Actions, Prometheus.
-
----
-
-## 🔐 Security & Governance / الأمن والسيادة
-This repository is the private property of **Al-Zubair Tec Investment**. 
-Unauthorized access or simulation is strictly prohibited under the **Z.ai Army Protocol**.
-
----
-**Maintained by:** Prince Sultan (Master Commander)
-**Company:** Al-Zubair Tec Investment
-**Contact:** alyzopairaly@gmail.com
+## Security
+Secrets are environment-only. No API secret, private key or wallet seed phrase belongs in the repository. Financial actions remain approval-gated.
