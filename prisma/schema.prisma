@@ -39,6 +39,15 @@ model PaymentIntent {
   confirmedAt  DateTime?
 }
 
+model ApiKey {
+  id          String   @id @default(cuid())
+  customerId  String
+  productId   String
+  keyHash     String   @unique
+  createdAt   DateTime @default(now())
+  revokedAt   DateTime?
+}
+
 model RevenueEvent {
   id           String   @id @default(cuid())
   service      String
