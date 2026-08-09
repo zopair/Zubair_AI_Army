@@ -24,3 +24,43 @@ model Command {
   response  String?
   createdAt DateTime @default(now())
 }
+
+model RevenueEvent {
+  id           String   @id @default(cuid())
+  service      String
+  requestId    String   @unique
+  customerId   String
+  agentId      String?
+  productId    String
+  units        Int
+  grossRevenue Float    @default(0)
+  variableCost Float    @default(0)
+  netRevenue   Float    @default(0)
+  status       String
+  metadata     String?
+  createdAt    DateTime @default(now())
+}
+
+model ReferralAttribution {
+  id           String   @id @default(cuid())
+  referralId   String   @unique
+  agentId      String
+  productId    String
+  customerId   String
+  revenueEventId String? @unique
+  status       String
+  rewardAmount Float    @default(0)
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+}
+
+model RewardSettlement {
+  id           String   @id @default(cuid())
+  referralId   String
+  amount       Float
+  currency     String   @default("USD")
+  status       String
+  idempotencyKey String @unique
+  createdAt    DateTime @default(now())
+  settledAt    DateTime?
+}
