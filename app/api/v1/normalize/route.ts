@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 const SERVICE = 'document-normalize-v1';
+const PRODUCT_ID = 'json-cleaner';
 const UNIT_PRICE = Number(process.env.NORMALIZE_UNIT_PRICE_USD ?? '0.01');
 const MAX_CHARS = Number(process.env.NORMALIZE_MAX_CHARS ?? '50000');
 
@@ -23,10 +24,10 @@ function normalize(text: string) {
 export async function POST(req: Request) {
   const requestId = randomUUID();
   const started = Date.now();
-  const configuredKey = process.env.ZOPAIR_API_KEY;
   const suppliedKey = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? '';
+  const apiKey = suppliedKey ? await prisma.apiKey.findUnique({ where: { keyHash: keyHash(suppliedKey) } }) : null;
 
-  if (!configuredKey || !suppliedKey || suppliedKey !== configuredKey) {
+  if (!apiKey || apiKey.revokedAt || apiKey.productId !== PRODUCT_ID) {
     return NextResponse.json({ error: 'unauthorized', requestId }, { status: 401 });
   }
 
@@ -41,20 +42,21 @@ export async function POST(req: Request) {
 
     const result = normalize(body.text);
     const units = Math.max(1, Math.ceil(result.length / 1000));
-    const grossRevenue = units * UNIT_PRICE;
+    const grossRevenue = Number((units * UNIT_PRICE).toFixed(8));
     const quality = result.length > 0 ? 1 : 0;
 
     await prisma.revenueEvent.create({
       data: {
         service: SERVICE,
         requestId,
-        apiKeyHash: keyHash(suppliedKey),
+        customerId: apiKey.customerId,
+        productId: PRODUCT_ID,
         units,
         grossRevenue,
         variableCost: 0,
-        quality,
+        netRevenue: grossRevenue,
         status: 'COMPLETED',
-        metadata: JSON.stringify({ latencyMs: Date.now() - started, inputChars: body.text.length }),
+        metadata: JSON.stringify({ latencyMs: Date.now() - started, inputChars: body.text.length, quality }),
       },
     });
 
