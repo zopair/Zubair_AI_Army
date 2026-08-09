@@ -1,7 +1,7 @@
 {
   "id": "json-cleaner",
   "status": "beta",
-  "billing": {"model": "usage", "currency": "USD", "unit": "request", "unitPrice": 0.01, "minimumCharge": 0.01},
-  "limits": {"maxRequestsPerMinute": 60},
-  "checkout": {"providers": ["card", "binance_pay"], "binancePayEnabled": false}
+  "billing": {"model": "prepaid", "currency": "USD", "activationPrice": 0.25, "includedRequests": 25, "effectiveUnitPrice": 0.01},
+  "limits": {"maxRequestsPerMinute": 60, "maxInputChars": 50000},
+  "checkout": {"providers": ["binance_pay"], "binancePayEnabled": true, "mode": "receive_only", "merchantUid": "717654739"}
 }
