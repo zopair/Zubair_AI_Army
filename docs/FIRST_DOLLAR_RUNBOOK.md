@@ -9,6 +9,8 @@ The only MVP success criterion is one real, verified customer payment. The amoun
 4. Pay the displayed USD-equivalent amount to Binance Pay merchant UID `717654739`.
 5. Keep the Binance Pay transaction/reference ID.
 
+The $0.25 beta payment grants 25 prepaid API requests.
+
 ## Verification flow
 Until Binance Pay merchant API credentials/webhooks are configured, payment verification is intentionally manual.
 
@@ -19,15 +21,18 @@ An authorized operator calls `POST /api/v1/payment/confirm` with:
 
 The endpoint atomically:
 - marks the payment intent confirmed;
-- creates a confirmed RevenueEvent;
-- issues one customer API key (returned once).
+- creates a confirmed RevenueEvent for the actual $0.25 payment;
+- issues one customer API key (returned once);
+- grants 25 prepaid requests.
 
 ## API proof
 Call `POST /api/v1/normalize` with `Authorization: Bearer <customer-api-key>` and a JSON body containing `text`.
 
-The request creates a metered RevenueEvent. This proves the chain:
+Each successful request consumes one prepaid credit and records a usage event with zero additional revenue. This prevents double-counting the original payment.
 
-Customer → Binance Pay payment → verification → Revenue Ledger → API access → metered usage.
+The proof chain is:
+
+Customer → Binance Pay payment → independent verification → Revenue Ledger → API access → prepaid usage.
 
 ## Production gate
 Do not call a payment confirmed until the operator has independently verified the transaction in the merchant account. Never infer payment from a client-side screenshot or request body alone.
