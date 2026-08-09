@@ -1,0 +1,26 @@
+schema: v1
+name: zopair-task
+required:
+  - id
+  - command
+  - workspace
+properties:
+  id: string
+  command: string
+  workspace:
+    cpu: integer
+    memory_mb: integer
+    persistent: boolean
+  network:
+    mode: enum[none,restricted,full]
+  artifacts:
+    paths: list[string]
+  timeout_seconds: integer
+  retry:
+    max_attempts: integer
+  secrets:
+    references_only: true
+policy:
+  privileged: false
+  financial_actions: false
+  production_deploy: false
