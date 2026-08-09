@@ -1,0 +1,19 @@
+name: Marketplace Smoke
+
+on:
+  push:
+    paths:
+      - 'marketplace/**'
+      - '.github/workflows/marketplace-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node marketplace/catalog.test.mjs
+      - run: node marketplace/marketplace.test.mjs
