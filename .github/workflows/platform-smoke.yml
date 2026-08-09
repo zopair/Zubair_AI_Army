@@ -1,0 +1,19 @@
+name: Commercial Platform Smoke
+
+on:
+  push:
+    paths:
+      - 'platform/**'
+      - '.github/workflows/platform-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node platform/factory/product-score.test.mjs
+      - run: node -e "const fs=require('fs'); for (const p of ['platform/launch-plan.yml','platform/gates.json','platform/aeo/manifest.schema.json','platform/analytics/events.schema.json','platform/security/policy.yml','platform/payments/binance-pay.yml']) { if(!fs.existsSync(p)) throw new Error('missing '+p) }; console.log('platform manifests present')"
