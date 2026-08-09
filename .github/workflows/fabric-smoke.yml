@@ -1,0 +1,25 @@
+name: Infrastructure Fabric Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'infra/fabric/**'
+      - '.github/workflows/fabric-smoke.yml'
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run fabric contract tests
+        run: |
+          node infra/fabric/execution/task-runner.test.mjs
+          node infra/fabric/execution/provider-registry.test.mjs
+          node infra/fabric/execution/orchestrator.test.mjs
+      - name: Verify benchmark plan
+        run: node -e "const fs=require('fs'); const s=fs.readFileSync('infra/fabric/benchmark/smoke-plan.yml','utf8'); if(!s.includes('fabric-smoke')||!s.includes('correctness')) process.exit(1)"
