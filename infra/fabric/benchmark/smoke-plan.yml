@@ -1,0 +1,21 @@
+name: fabric-smoke
+version: 1
+workloads:
+  - id: deterministic-node
+    command: node
+    args: ['-e', 'process.stdout.write("zopair-fabric-ok")']
+    expected_exit_code: 0
+    network: none
+  - id: invalid-command
+    command: bash
+    args: ['-lc', 'echo should-not-run']
+    expected_status: rejected
+metrics:
+  - correctness
+  - latency_ms
+  - attempts
+  - provider
+  - stdout_bytes
+  - stderr_bytes
+success_threshold:
+  correctness: 1.0
