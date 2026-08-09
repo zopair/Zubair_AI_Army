@@ -1,0 +1,17 @@
+when:
+  - event: [push, pull_request, manual]
+
+steps:
+  contract-tests:
+    image: node:20-bookworm
+    commands:
+      - node infra/fabric/execution/task-runner.test.mjs
+      - node infra/fabric/execution/provider-registry.test.mjs
+      - node infra/fabric/execution/orchestrator.test.mjs
+      - node ops/release/e2e-smoke.mjs
+  release-gate:
+    image: alpine:3.20
+    commands:
+      - test -f ops/release/readiness-gate.yml
+      - test -f ops/release/product-inventory.schema.json
+      - test -f COST_POLICY.md
