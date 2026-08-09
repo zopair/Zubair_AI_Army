@@ -32,11 +32,13 @@ export const capabilityScore = (agent, task, history = null) => {
     + (0.20 * safety);
 };
 
+export const rankAgents = (agents, task, history = null) => agents
+  .map(agent => ({ agent, score: capabilityScore(agent, task, history) }))
+  .filter(x => Number.isFinite(x.score))
+  .sort((a, b) => b.score - a.score);
+
 export const selectAgent = (agents, task, history = null) => {
-  const ranked = agents
-    .map(agent => ({ agent, score: capabilityScore(agent, task, history) }))
-    .filter(x => Number.isFinite(x.score))
-    .sort((a, b) => b.score - a.score);
+  const ranked = rankAgents(agents, task, history);
   if (!ranked.length) throw new Error(`No eligible agent for task: ${task.id}`);
   return ranked[0];
 };
@@ -48,10 +50,11 @@ export const createAudit = (event, data = {}) => ({
 });
 
 export class ZopairArmy {
-  constructor({ agents = AGENTS, judge = null, skills = DEFAULT_SKILLS, performance = null } = {}) {
+  constructor({ agents = AGENTS, judge = null, skills = DEFAULT_SKILLS, performance = null, maxAttempts = 2 } = {}) {
     this.agents = agents;
     this.skills = new SkillRegistry(skills);
     this.performance = performance ?? new AgentPerformanceMemory();
+    this.maxAttempts = Math.max(1, maxAttempts);
     this.judge = judge ?? ((task, result) => ({
       passed: Boolean(result?.output),
       score: result?.output ? 1 : 0,
@@ -70,52 +73,59 @@ export class ZopairArmy {
     this.log('task.received', { taskId: task.id, capabilities: task.capabilities });
 
     const skillCandidates = this.skills.findForTask(task);
-    if (!skillCandidates.length) {
-      throw new Error(`No eligible skill for task: ${task.id}`);
-    }
+    if (!skillCandidates.length) throw new Error(`No eligible skill for task: ${task.id}`);
     const skill = skillCandidates[0].skill;
     this.log('skill.selected', { taskId: task.id, skillId: skill.id, fit: skillCandidates[0].fit });
 
-    const selected = selectAgent(this.agents, task, this.performance);
-    this.log('agent.selected', { taskId: task.id, agentId: selected.agent.id, score: selected.score });
+    const ranked = rankAgents(this.agents, task, this.performance);
+    if (!ranked.length) throw new Error(`No eligible agent for task: ${task.id}`);
 
-    const started = Date.now();
-    let result;
-    let success = false;
-    try {
-      result = await worker(selected.agent, task, skill);
-      success = Boolean(result?.output);
-      this.log('agent.completed', {
-        taskId: task.id,
-        agentId: selected.agent.id,
-        durationMs: Date.now() - started,
-      });
-    } catch (error) {
-      this.log('agent.failed', { taskId: task.id, agentId: selected.agent.id, error: String(error?.message ?? error) });
+    const attempts = Math.min(this.maxAttempts, ranked.length);
+    let lastError = null;
+
+    for (let index = 0; index < attempts; index += 1) {
+      const selected = ranked[index];
+      const started = Date.now();
+      this.log('agent.selected', { taskId: task.id, agentId: selected.agent.id, score: selected.score, attempt: index + 1 });
+
+      let result;
+      try {
+        result = await worker(selected.agent, task, skill);
+      } catch (error) {
+        lastError = error;
+        this.performance.record({
+          agentId: selected.agent.id,
+          taskType: task.taskType ?? task.capabilities?.[0] ?? 'general',
+          success: false,
+          cost: selected.agent.cost,
+          latencyMs: Date.now() - started,
+          risk: selected.agent.risk,
+        });
+        this.log('agent.failed', { taskId: task.id, agentId: selected.agent.id, attempt: index + 1, error: String(error?.message ?? error) });
+        continue;
+      }
+
+      const verdict = this.judge(task, result);
+      const success = Boolean(verdict.passed && result?.output);
       this.performance.record({
         agentId: selected.agent.id,
         taskType: task.taskType ?? task.capabilities?.[0] ?? 'general',
-        success: false,
+        success,
         cost: selected.agent.cost,
         latencyMs: Date.now() - started,
         risk: selected.agent.risk,
       });
-      throw error;
+      this.log('agent.completed', { taskId: task.id, agentId: selected.agent.id, durationMs: Date.now() - started, attempt: index + 1 });
+      this.log('judge.verdict', { taskId: task.id, agentId: selected.agent.id, attempt: index + 1, ...verdict });
+      this.log('performance.updated', { taskId: task.id, agentId: selected.agent.id, success });
+
+      if (success) {
+        return { task, skill, agent: selected.agent, result, verdict, attempts: index + 1, audit: [...this.audit] };
+      }
+
+      lastError = new Error(`Judge rejected result from ${selected.agent.id}: ${verdict.reason ?? 'unknown reason'}`);
     }
 
-    const verdict = this.judge(task, result);
-    success = Boolean(verdict.passed && success);
-    this.performance.record({
-      agentId: selected.agent.id,
-      taskType: task.taskType ?? task.capabilities?.[0] ?? 'general',
-      success,
-      cost: selected.agent.cost,
-      latencyMs: Date.now() - started,
-      risk: selected.agent.risk,
-    });
-    this.log('judge.verdict', { taskId: task.id, ...verdict });
-    this.log('performance.updated', { taskId: task.id, agentId: selected.agent.id, success });
-
-    return { task, skill, agent: selected.agent, result, verdict, audit: [...this.audit] };
+    throw lastError ?? new Error(`All eligible agents failed task: ${task.id}`);
   }
 }
