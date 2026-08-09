@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "products": [
+    {
+      "id": "agent-fabric-starter",
+      "name": "Agent Fabric Starter",
+      "type": "open-core",
+      "status": "available",
+      "delivery": "repository",
+      "free_core": true,
+      "paid_services": ["installation", "customization", "migration", "support"]
+    },
+    {
+      "id": "agentops-audit",
+      "name": "AgentOps Architecture Audit",
+      "type": "service",
+      "status": "available",
+      "delivery": "manual-report",
+      "paid_services": ["architecture-review", "cost-reduction-plan", "reliability-plan"]
+    },
+    {
+      "id": "workflow-migration",
+      "name": "CI/Automation Migration Pack",
+      "type": "service",
+      "status": "available",
+      "delivery": "repository-patch",
+      "paid_services": ["github-actions-to-self-hosted", "provider-migration", "workflow-hardening"]
+    }
+  ]
+}
