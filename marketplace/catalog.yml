@@ -4,10 +4,11 @@ products:
     name: JSON Cleaner
     category: data-processing
     status: beta
-    pricing_model: activation-plus-usage
+    pricing_model: prepaid
     featured: true
     activation_usd: 0.25
-    usage_usd_per_request: 0.01
+    included_requests: 25
+    effective_unit_price_usd: 0.01
     tags: [json, data, api, agents]
   - slug: document-normalize-api
     name: Document Normalize API
