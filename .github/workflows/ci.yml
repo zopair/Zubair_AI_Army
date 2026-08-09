@@ -7,5 +7,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup Environment
         run: echo "Zubair AI Army Protocol Active"
-      - name: Run Zopair Army core tests
+      - name: Run core tests
         run: node zopair_army/core.test.mjs
+      - name: Run deterministic benchmark
+        run: node zopair_army/benchmark.mjs
