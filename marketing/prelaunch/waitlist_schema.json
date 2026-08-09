@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ZOPAIR Waitlist Event",
+  "type": "object",
+  "required": ["eventId", "occurredAt", "source", "productInterest"],
+  "properties": {
+    "eventId": {"type": "string", "minLength": 1},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "source": {"type": "string", "minLength": 1},
+    "productInterest": {"type": "array", "items": {"type": "string"}},
+    "consent": {"type": "boolean"}
+  }
+}
