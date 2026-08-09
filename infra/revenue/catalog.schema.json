@@ -1,0 +1,6 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "type":"object",
+  "required":["products"],
+  "properties":{"products":{"type":"array","items":{"type":"object","required":["id","name","status","delivery","price"],"properties":{"id":{"type":"string"},"name":{"type":"string"},"status":{"enum":["draft","beta","live","paused"]},"delivery":{"type":"string"},"price":{"type":"object","required":["currency","amount"],"properties":{"currency":{"type":"string"},"amount":{"type":"number","minimum":0}}}}}}}
+}
