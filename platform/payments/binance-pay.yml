@@ -1,0 +1,21 @@
+schema: v1
+provider: binance_pay
+enabled: false
+mode: hosted_checkout
+currency_policy:
+  preferred: [USDT, USDC]
+  fiat_display: USD
+credentials:
+  api_key_env: BINANCE_PAY_API_KEY
+  api_secret_env: BINANCE_PAY_API_SECRET
+production_requirements:
+  - merchant_account_approved
+  - credentials_configured_in_secret_manager
+  - webhook_verification_enabled
+  - idempotency_enabled
+  - order_status_reconciliation_enabled
+safety:
+  auto_withdrawals: false
+  auto_refunds: false
+  financial_movement_requires_human_confirmation: true
+notes: "Integration is deliberately disabled until merchant onboarding and credentials are configured."
