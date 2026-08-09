@@ -1,0 +1,46 @@
+{
+  "lab": "Zopair Agent Lab v1",
+  "stage": "1-github-api-static-benchmark",
+  "executed_via": "GitHub connector API",
+  "runtime_execution": false,
+  "runtime_blocker": "GitHub Actions jobs are being created but terminate before exposing step logs; local container has no DNS/network access to github.com.",
+  "financial_safety": "No trading, mining, purchases, wallet signing, or live financial actions were performed.",
+  "candidates": [
+    {
+      "name": "OpenHands",
+      "repository": "OpenHands/OpenHands",
+      "public": true,
+      "archived": false,
+      "default_branch": "main",
+      "size_kb": 398412,
+      "role": "software-agent/runtime",
+      "stage1_status": "confirmed-repository"
+    },
+    {
+      "name": "Agent Zero",
+      "repository": "agent0ai/agent-zero",
+      "public": true,
+      "archived": false,
+      "default_branch": "main",
+      "size_kb": 61890,
+      "role": "general-autonomous-agent",
+      "stage1_status": "confirmed-repository"
+    },
+    {
+      "name": "CrewAI",
+      "repository": "crewAIInc/crewAI",
+      "public": true,
+      "archived": false,
+      "default_branch": "main",
+      "size_kb": 289772,
+      "role": "multi-agent orchestration",
+      "stage1_status": "confirmed-repository"
+    }
+  ],
+  "selection": {
+    "primary_runtime_candidate": "OpenHands",
+    "primary_general_agent_candidate": "Agent Zero",
+    "primary_multi_agent_candidate": "CrewAI",
+    "reason": "These three repositories were confirmed as public, non-archived repositories through the GitHub API and cover distinct architecture roles. This is a shortlist for runtime testing, not a claim of profitability."
+  }
+}
