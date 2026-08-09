@@ -1,0 +1,17 @@
+schema: v1
+mode: guarded
+permissions:
+  production_deploy: false
+  external_outreach: true
+  financial_movement: false
+  create_payment_request: true
+  modify_billing: false
+spending:
+  daily_limit_usd: 25
+  per_transaction_limit_usd: 10
+  auto_settlement: false
+controls:
+  audit_log: required
+  idempotency: required
+  kill_switch: required
+  human_confirmation_for_money_movement: required
