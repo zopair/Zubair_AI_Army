@@ -1,0 +1,15 @@
+schema: v1
+mode: guarded
+financial_actions:
+  autonomous: false
+  max_daily_usd: 0
+  allowed: []
+production_deploy:
+  autonomous: false
+secrets:
+  source: environment
+  never_commit: true
+kill_switch:
+  required: true
+audit:
+  required: true
