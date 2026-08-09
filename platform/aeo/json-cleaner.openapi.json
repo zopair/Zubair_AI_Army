@@ -1,0 +1,7 @@
+{
+  "openapi":"3.1.0",
+  "info":{"title":"ZOPAIR JSON Cleaner API","version":"1.0.0","description":"Normalize messy text/JSON payloads for developers and AI agents."},
+  "servers":[{"url":"/api/v1"}],
+  "paths":{"/normalize":{"post":{"summary":"Normalize a payload","security":[{"bearerAuth":[]}],"requestBody":{"required":true,"content":{"application/json":{"schema":{"type":"object","required":["text"],"properties":{"text":{"type":"string","maxLength":50000}}}}}},"responses":{"200":{"description":"Normalized payload and usage","content":{"application/json":{"schema":{"type":"object"}}}},"401":{"description":"Invalid API key"}}}}}},
+  "components":{"securitySchemes":{"bearerAuth":{"type":"http","scheme":"bearer"}}}
+}
