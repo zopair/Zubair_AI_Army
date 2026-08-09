@@ -1,0 +1,13 @@
+services:
+  fabric-runner:
+    image: node:20-bookworm-slim
+    working_dir: /workspace
+    volumes:
+      - ../../..:/workspace:ro
+    command: ["node", "infra/fabric/execution/task-runner.test.mjs"]
+    network_mode: none
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
