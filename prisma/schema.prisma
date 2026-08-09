@@ -1,4 +1,3 @@
-
 datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
@@ -10,7 +9,7 @@ generator client {
 
 model Memory {
   id        String   @id @default(cuid())
-  type      String   // SOVEREIGN, EPISODIC, CONTEXT
+  type      String
   content   String
   status    String?
   metadata  String?
@@ -20,7 +19,21 @@ model Memory {
 model Command {
   id        String   @id @default(cuid())
   text      String
-  status    String   @default("PENDING") // PENDING, EXECUTING, COMPLETED
+  status    String   @default("PENDING")
   response  String?
   createdAt DateTime @default(now())
+}
+
+model RevenueEvent {
+  id            String   @id @default(cuid())
+  service       String
+  requestId     String   @unique
+  apiKeyHash    String
+  units         Int
+  grossRevenue  Float    @default(0)
+  variableCost  Float    @default(0)
+  quality       Float    @default(0)
+  status        String
+  metadata      String?
+  createdAt     DateTime @default(now())
 }
