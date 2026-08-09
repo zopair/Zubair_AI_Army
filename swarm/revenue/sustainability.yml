@@ -1,0 +1,19 @@
+version: 1
+principles:
+  cashflow_first: true
+  open_source_first: true
+  local_first: true
+  paid_infrastructure_last: true
+  revenue_reinvestment_cap: 0.25
+  reserve_target_months: 3
+controls:
+  spending_requires_revenue_signal: true
+  daily_spend_limit_usd: 2
+  no_speculative_cloud_scaling: true
+  no_paid_model_calls_for_market_discovery: true
+  cache_and_deduplicate_tasks: true
+  human_approval_required_for_financial_transfers: true
+feedback_loop:
+  collect: [traffic, leads, conversion, revenue, costs, refunds, support_load]
+  review: weekly
+  actions: [improve, reprice, reposition, pause, retire]
