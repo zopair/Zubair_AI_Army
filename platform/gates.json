@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "productStates": ["prototype","beta","validated","paid","retired"],
+  "paidGate": {
+    "required": ["testsPass","securityPass","docsReady","pricingDefined","meteringReady","paymentReady"],
+    "claimsMustBeMeasured": true
+  },
+  "autonomyGate": {
+    "required": ["policyEngine","auditLog","spendingLimit","killSwitch","manualApprovalForProductionMoneyMovement"]
+  }
+}
