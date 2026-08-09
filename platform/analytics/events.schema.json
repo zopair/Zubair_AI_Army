@@ -1,0 +1,17 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"ZOPAIR Commercial Event",
+  "type":"object",
+  "required":["eventId","type","occurredAt"],
+  "properties":{
+    "eventId":{"type":"string"},
+    "type":{"enum":["impression","qualified_visit","signup","waitlist","trial","usage","purchase","refund","referral","reward"]},
+    "occurredAt":{"type":"string","format":"date-time"},
+    "productId":{"type":"string"},
+    "customerId":{"type":"string"},
+    "referralId":{"type":"string"},
+    "amount":{"type":"number","minimum":0},
+    "currency":{"type":"string"},
+    "source":{"type":"string"}
+  }
+}
