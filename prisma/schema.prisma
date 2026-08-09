@@ -48,6 +48,16 @@ model ApiKey {
   revokedAt   DateTime?
 }
 
+model CustomerCredit {
+  id             String   @id @default(cuid())
+  customerId     String
+  productId      String
+  unitsRemaining Int      @default(0)
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+  @@unique([customerId, productId])
+}
+
 model RevenueEvent {
   id           String   @id @default(cuid())
   service      String
@@ -80,7 +90,7 @@ model ReferralAttribution {
 model RewardSettlement {
   id             String   @id @default(cuid())
   referralId     String
-  amount         Float
+  amount         Float    
   currency       String   @default("USD")
   status         String
   idempotencyKey String   @unique
