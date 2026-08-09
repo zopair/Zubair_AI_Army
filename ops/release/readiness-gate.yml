@@ -1,0 +1,18 @@
+version: 1
+release: revenue-mvp
+rules:
+  product_inventory_verified: true
+  payment_verification_required: true
+  fulfillment_tested: true
+  event_ledger_writable: true
+  marketing_assets_present: true
+  outreach_authorized: true
+  budget_guard_enabled: true
+  recovery_tested: true
+  no_paid_dependency_on_critical_path: true
+  revenue_proof_required_for_scale: true
+thresholds:
+  critical_failures: 0
+  unverified_products: 0
+  payment_verification_failures: 0
+  fulfillment_failures: 0
