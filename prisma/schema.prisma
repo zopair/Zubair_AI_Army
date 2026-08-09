@@ -24,6 +24,54 @@ model Command {
   createdAt DateTime @default(now())
 }
 
+model Product {
+  id             String   @id
+  slug           String   @unique
+  name           String
+  status         String   @default("DRAFT")
+  deliveryType   String   @default("DIGITAL")
+  price          Float    @default(0)
+  currency       String   @default("USD")
+  checkoutPath   String?
+  deliveryTarget String?
+  metadata       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  orders         Order[]
+  entitlements   Entitlement[]
+  revenueEvents  RevenueEvent[]
+}
+
+model Lead {
+  id          String   @id @default(cuid())
+  source      String
+  externalRef String?
+  status      String   @default("NEW")
+  score       Int      @default(0)
+  productId   String?
+  metadata    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([source, status])
+}
+
+model Order {
+  id             String   @id @default(cuid())
+  productId      String
+  customerId     String
+  amount         Float
+  currency       String   @default("USD")
+  status         String   @default("PENDING_PAYMENT")
+  paymentIntentId String?
+  referralId     String?
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+  paidAt         DateTime?
+  deliveredAt    DateTime?
+  product        Product  @relation(fields: [productId], references: [id])
+  @@index([customerId, status])
+}
+
 model PaymentIntent {
   id           String   @id @default(cuid())
   productId    String
@@ -37,6 +85,19 @@ model PaymentIntent {
   externalRef  String?  @unique
   createdAt    DateTime @default(now())
   confirmedAt  DateTime?
+}
+
+model Entitlement {
+  id          String   @id @default(cuid())
+  customerId  String
+  productId   String
+  orderId     String
+  status      String   @default("ACTIVE")
+  deliveryRef String?
+  createdAt   DateTime @default(now())
+  revokedAt   DateTime?
+  product     Product  @relation(fields: [productId], references: [id])
+  @@unique([customerId, productId, orderId])
 }
 
 model ApiKey {
@@ -72,6 +133,7 @@ model RevenueEvent {
   status       String
   metadata     String?
   createdAt    DateTime @default(now())
+  product      Product  @relation(fields: [productId], references: [id])
 }
 
 model ReferralAttribution {
@@ -90,10 +152,47 @@ model ReferralAttribution {
 model RewardSettlement {
   id             String   @id @default(cuid())
   referralId     String
-  amount         Float    
+  amount         Float
   currency       String   @default("USD")
   status         String
   idempotencyKey String   @unique
   createdAt      DateTime @default(now())
   settledAt      DateTime?
+}
+
+model AgentRun {
+  id          String   @id @default(cuid())
+  agentId     String
+  taskType    String
+  status      String   @default("PENDING")
+  inputHash   String?
+  outputRef   String?
+  cost        Float    @default(0)
+  error       String?
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  createdAt   DateTime @default(now())
+  @@index([agentId, status])
+}
+
+model SpendGuard {
+  id              String   @id
+  dailyLimit      Float    @default(0)
+  spentToday      Float    @default(0)
+  currency        String   @default("USD")
+  killSwitch      Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+}
+
+model RecoveryIncident {
+  id            String   @id @default(cuid())
+  component     String
+  fingerprint   String   @unique
+  status        String   @default("OPEN")
+  diagnosis     String?
+  remediation   String?
+  verification  String?
+  attempts      Int      @default(0)
+  createdAt     DateTime @default(now())
+  resolvedAt    DateTime?
 }
