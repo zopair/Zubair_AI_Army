@@ -2,7 +2,16 @@
   "schemaVersion": "1.0",
   "publisher": "ZOPAIR",
   "products": [
-    {"id":"json-cleaner","capabilities":["repair malformed JSON","validate JSON"],"protocols":["REST","OpenAPI"],"billing":"usage"}
+    {
+      "id":"json-cleaner",
+      "status":"beta",
+      "capabilities":["normalize messy text","clean JSON-like payloads","validate normalized output"],
+      "protocols":["REST","OpenAPI"],
+      "billing":{"activationUsd":0.25,"usageUsdPerRequest":0.01},
+      "limits":{"requestsPerMinute":60,"maxInputChars":50000},
+      "payment":{"provider":"binance_pay","mode":"receive_only","merchantUid":"717654739"},
+      "endpoint":"/api/v1/normalize"
+    }
   ],
-  "discovery": {"humanUrl":"/marketplace/", "machineReadable":true}
+  "discovery":{"humanUrl":"/marketplace/","machineReadable":true,"openapi":"/platform/aeo/json-cleaner.openapi.json"}
 }
