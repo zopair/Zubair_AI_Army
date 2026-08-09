@@ -1,0 +1,17 @@
+when:
+  - event: push
+  - event: pull_request
+
+steps:
+  fabric-smoke:
+    image: node:20-bookworm-slim
+    commands:
+      - node infra/fabric/execution/task-runner.test.mjs
+      - node infra/fabric/execution/provider-registry.test.mjs
+      - node infra/fabric/execution/orchestrator.test.mjs
+
+  policy-check:
+    image: alpine:3.20
+    commands:
+      - grep -q "untrusted_prs_on_privileged_runners: forbidden" infra/fabric/providers.yml
+      - grep -q "network: none" infra/fabric/agent-example.yml
