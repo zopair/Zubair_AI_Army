@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "checks": [
+    "github_access",
+    "repository_access",
+    "actions_available",
+    "runner_available",
+    "secrets_externalized",
+    "mailbox_reachable",
+    "audit_logging",
+    "payment_receive_configuration"
+  ],
+  "successCondition": "all_required_checks_pass"
+}
