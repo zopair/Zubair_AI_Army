@@ -1,4 +1,3 @@
-
 datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
@@ -10,7 +9,7 @@ generator client {
 
 model Memory {
   id        String   @id @default(cuid())
-  type      String   // SOVEREIGN, EPISODIC, CONTEXT
+  type      String
   content   String
   status    String?
   metadata  String?
@@ -20,9 +19,24 @@ model Memory {
 model Command {
   id        String   @id @default(cuid())
   text      String
-  status    String   @default("PENDING") // PENDING, EXECUTING, COMPLETED
+  status    String   @default("PENDING")
   response  String?
   createdAt DateTime @default(now())
+}
+
+model PaymentIntent {
+  id           String   @id @default(cuid())
+  productId    String
+  customerId   String
+  amount       Float
+  currency     String   @default("USD")
+  provider     String   @default("binance_pay")
+  merchantUid  String
+  referralId   String?
+  status       String   @default("PENDING")
+  externalRef  String?  @unique
+  createdAt    DateTime @default(now())
+  confirmedAt  DateTime?
 }
 
 model RevenueEvent {
@@ -42,25 +56,25 @@ model RevenueEvent {
 }
 
 model ReferralAttribution {
-  id           String   @id @default(cuid())
-  referralId   String   @unique
-  agentId      String
-  productId    String
-  customerId   String
-  revenueEventId String? @unique
-  status       String
-  rewardAmount Float    @default(0)
-  createdAt    DateTime @default(now())
-  expiresAt    DateTime
+  id            String   @id @default(cuid())
+  referralId    String   @unique
+  agentId       String
+  productId     String
+  customerId    String
+  revenueEventId String?  @unique
+  status        String
+  rewardAmount  Float    @default(0)
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
 }
 
 model RewardSettlement {
-  id           String   @id @default(cuid())
-  referralId   String
-  amount       Float
-  currency     String   @default("USD")
-  status       String
-  idempotencyKey String @unique
-  createdAt    DateTime @default(now())
-  settledAt    DateTime?
+  id             String   @id @default(cuid())
+  referralId     String
+  amount         Float
+  currency       String   @default("USD")
+  status         String
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+  settledAt      DateTime?
 }
