@@ -1,0 +1,7 @@
+{
+  "id": "json-cleaner",
+  "status": "beta",
+  "billing": {"model": "usage", "currency": "USD", "unit": "request", "unitPrice": 0.01, "minimumCharge": 0.01},
+  "limits": {"maxRequestsPerMinute": 60},
+  "checkout": {"providers": ["card", "binance_pay"], "binancePayEnabled": false}
+}
