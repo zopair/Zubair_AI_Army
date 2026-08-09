@@ -1,0 +1,13 @@
+schema: v1
+provider: binance_pay
+mode: receive_only
+enabled: true
+merchant_uid: "717654739"
+allowed_purpose: customer_payments
+agent_outbound_transfers: false
+treasury_spending: false
+withdrawals: false
+notes:
+  - "This identifier is configured only as a payment receiving destination."
+  - "No private key, API secret, or signing credential is stored in the repository."
+  - "The UID is not treated as an autonomous wallet credential."
