@@ -1,0 +1,26 @@
+schema: v1
+mode: authorized-automation
+allowed:
+  - browser_navigation
+  - form_filling
+  - transactional_email_reading
+  - repository_configuration
+  - ci_configuration
+  - post_setup_health_checks
+requires_human:
+  - identity_verification
+  - captcha
+  - legal_acceptance
+  - payment_authorization
+  - recovery_code_entry
+forbidden:
+  - credential_exfiltration
+  - bypass_provider_controls
+  - account_farming
+  - impersonation
+secrets:
+  storage: external-secret-manager
+  repository_storage: forbidden
+audit:
+  every_action: true
+  retention_days: 90
