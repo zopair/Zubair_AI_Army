@@ -1,0 +1,21 @@
+name = "personal-ai-agent-engine"
+main = "src/index.ts"
+compatibility_date = "2026-10-30"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "personal-agent-db"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[[queues.producers]]
+binding = "TASK_QUEUE"
+queue = "personal-agent-tasks"
+
+[[queues.consumers]]
+queue = "personal-agent-tasks"
+max_batch_size = 5
+max_retries = 3
+
+[vars]
+GITHUB_REPOSITORY = "zopair/Zubair_AI_Army"
