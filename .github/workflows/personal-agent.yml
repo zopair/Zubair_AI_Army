@@ -1,0 +1,49 @@
+name: Personal Agent Task Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_id:
+        description: Task identifier
+        required: true
+        type: string
+      task_text:
+        description: User task (treated as data, never executed as shell)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: personal-agent-${{ inputs.task_id }}
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Record task safely
+        env:
+          TASK_ID: ${{ inputs.task_id }}
+          TASK_TEXT: ${{ inputs.task_text }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          task_id = os.environ["TASK_ID"]
+          task_text = os.environ["TASK_TEXT"]
+          Path("task-output").mkdir(exist_ok=True)
+          Path("task-output/task.txt").write_text(task_text, encoding="utf-8")
+          Path("task-output/task-id.txt").write_text(task_id, encoding="utf-8")
+          print(f"Accepted task {task_id}; task text stored as data.")
+          PY
+      - name: Upload task record
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: personal-agent-${{ inputs.task_id }}
+          path: task-output/
+          retention-days: 3
