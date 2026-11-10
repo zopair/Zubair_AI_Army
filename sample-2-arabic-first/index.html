@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f1eadf">
+  <title>رِواق للتطوير | نموذج تجريبي</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#203c35;--deep:#17342e;--cream:#f1eadf;--paper:#fbf8f2;--coral:#d66e54;--gold:#bd9860;--muted:#68766f;--line:#ded8cd}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.9 "IBM Plex Sans Arabic",Tahoma,sans-serif}
+    .shell{width:min(1160px,calc(100% - 44px));margin-inline:auto}
+    header{padding-block:22px;border-bottom:1px solid var(--line)}
+    .nav{display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .logo{font-weight:700;font-size:25px;letter-spacing:-.04em}.logo span{color:var(--coral)}
+    .tag{display:block;font:700 9px Manrope,sans-serif;letter-spacing:.18em;color:var(--muted);direction:ltr;text-align:right}
+    .lang{border:0;background:var(--deep);color:#fff;padding:10px 18px;border-radius:30px;font:600 13px Manrope,sans-serif;cursor:pointer}
+    .hero{padding-block:76px 64px;background:var(--cream);position:relative}
+    .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:54px;align-items:center}
+    .kicker{color:var(--coral);font-size:13px;font-weight:700;margin:0 0 18px}
+    h1{font-size:clamp(36px,5vw,62px);line-height:1.35;letter-spacing:-.045em;margin:0 0 22px;max-width:700px}
+    .hero p.desc{font-size:18px;color:#52675e;max-width:590px;margin:0 0 28px}
+    .button{display:inline-block;background:var(--coral);color:#fff;text-decoration:none;padding:13px 25px;border-radius:30px;font-weight:600}
+    .visual{min-height:340px;background:var(--deep);border-radius:48% 48% 8px 8px;position:relative;overflow:hidden;display:grid;place-items:center;color:var(--cream);text-align:center;padding:32px}
+    .visual:before,.visual:after{content:"";position:absolute;border:1px solid #ffffff38;border-radius:50%;width:250px;height:250px}
+    .visual:after{width:180px;height:180px}
+    .visual strong{font-size:25px;z-index:1;max-width:230px;line-height:1.7}
+    .sample-stamp{position:absolute;bottom:20px;inset-inline-start:20px;color:#e8c99b;font:700 9px Manrope,sans-serif;letter-spacing:.12em;direction:ltr}
+    .section{padding-block:76px}
+    .section-title{max-width:680px;margin-block-end:34px}
+    h2{font-size:clamp(28px,3.5vw,42px);line-height:1.45;margin:0 0 12px}
+    .section-title p{margin:0;color:var(--muted)}
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .step{padding:28px 24px;border-top:3px solid var(--gold);background:#fff;min-height:200px}
+    .step .n{font:800 26px Manrope,sans-serif;color:var(--coral);direction:ltr;text-align:right}
+    .step h3{font-size:19px;margin:12px 0 8px}.step p{margin:0;color:var(--muted);font-size:14px}
+    .band{background:var(--deep);color:#fff;padding-block:62px}
+    .band-inner{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center}
+    .band h2{color:var(--cream)}.band p{color:#d0d9d2;margin:0}
+    .signup{background:var(--cream);padding:32px;border-radius:8px;color:var(--ink)}
+    form{display:grid;gap:13px}
+    label{font-size:13px;font-weight:600}
+    input{display:block;width:100%;margin-block-start:5px;padding:12px 14px;border:1px solid #c9c1b5;border-radius:5px;background:#fff;font:inherit}
+    input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+    .send{background:var(--coral);color:#fff;border:0;border-radius:5px;padding:13px;font:600 15px "IBM Plex Sans Arabic",sans-serif;cursor:pointer}
+    .note,.status{font-size:12px;color:var(--muted);margin:0}
+    footer{padding-block:24px;color:var(--muted);font-size:12px}
+    footer .shell{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    @media(max-width:780px){.hero-grid,.band-inner{grid-template-columns:1fr;gap:30px}.visual{min-height:240px;max-width:430px;margin-inline:auto;width:100%}.steps{grid-template-columns:1fr}.step{min-height:0}.hero{padding-block:54px}.section{padding-block:56px}.signup{padding:24px}}
+    @media(max-width:380px){.shell{width:calc(100% - 28px)}h1{font-size:34px}.hero p.desc{font-size:16px}}
+  </style>
+</head>
+<body>
+<header><div class="shell nav"><div class="logo">رِواق<span>.</span><small class="tag">DEVELOPMENT STUDIO · SAMPLE / DEMO</small></div><button class="lang" id="lang" type="button">English</button></div></header>
+<main>
+<section class="hero"><div class="shell hero-grid">
+  <div><p class="kicker" data-ar="التطوير يبدأ بقرار واضح" data-en="Development starts with a clear decision">التطوير يبدأ بقرار واضح</p>
+  <h1 data-ar="حوّل خبرتك إلى عمل أكثر وضوحاً وتأثيراً." data-en="Turn your expertise into clearer, more meaningful work.">حوّل خبرتك إلى عمل أكثر وضوحاً وتأثيراً.</h1>
+  <p class="desc" data-ar="رِواق نموذج افتراضي لاستوديو استشارات وتطوير مهني يساعد أصحاب الأعمال والخبراء على ترتيب الأولويات وبناء خطوات قابلة للتنفيذ." data-en="Riwaq is a fictional consulting and professional development studio helping founders and specialists organise priorities and build actionable next steps.">رِواق نموذج افتراضي لاستوديو استشارات وتطوير مهني يساعد أصحاب الأعمال والخبراء على ترتيب الأولويات وبناء خطوات قابلة للتنفيذ.</p>
+  <a class="button" href="#join" data-ar="احصل على جلسة التعارف" data-en="Request an introduction">احصل على جلسة التعارف</a></div>
+  <div class="visual"><strong data-ar="فكرة واضحة، خطة عملية، وتقدم مستمر." data-en="A clear idea. A practical plan. Steady progress.">فكرة واضحة، خطة عملية، وتقدم مستمر.</strong><span class="sample-stamp">SAMPLE / DEMO CONTENT</span></div>
+</div></section>
+<section class="section"><div class="shell"><div class="section-title"><p class="kicker" data-ar="كيف نعمل" data-en="How we work">كيف نعمل</p><h2 data-ar="من الرؤية إلى خطوات يمكن قياسها." data-en="From vision to steps you can act on.">من الرؤية إلى خطوات يمكن قياسها.</h2><p data-ar="تصميم تجريبي لخدمة استشارية تعتمد البساطة والوضوح في كل مرحلة." data-en="A demo concept for an advisory service built around simplicity and clarity at every stage.">تصميم تجريبي لخدمة استشارية تعتمد البساطة والوضوح في كل مرحلة.</p></div>
+<div class="steps">
+<article class="step"><div class="n">01</div><h3 data-ar="نفهم الصورة كاملة" data-en="Understand the whole picture">نفهم الصورة كاملة</h3><p data-ar="نستكشف السياق والتحديات والفرص قبل اقتراح أي مسار." data-en="Explore the context, challenges and opportunities before suggesting a direction.">نستكشف السياق والتحديات والفرص قبل اقتراح أي مسار.</p></article>
+<article class="step"><div class="n">02</div><h3 data-ar="نحدد الأولويات" data-en="Set the priorities">نحدد الأولويات</h3><p data-ar="نحوّل الأفكار المتعددة إلى أهداف مرتبة وخطوات واقعية." data-en="Turn competing ideas into prioritised goals and realistic actions.">نحوّل الأفكار المتعددة إلى أهداف مرتبة وخطوات واقعية.</p></article>
+<article class="step"><div class="n">03</div><h3 data-ar="نبدأ التنفيذ" data-en="Move into action">نبدأ التنفيذ</h3><p data-ar="نضع إيقاع متابعة يساعد على التعلم والتحسين المستمر." data-en="Create a review rhythm that supports learning and continuous improvement.">نضع إيقاع متابعة يساعد على التعلم والتحسين المستمر.</p></article>
+</div></div></section>
+<section class="band" id="join"><div class="shell band-inner"><div><p class="kicker" style="color:#e5b38b" data-ar="خطوتك التالية" data-en="Your next step">خطوتك التالية</p><h2 data-ar="ابدأ بمحادثة قصيرة." data-en="Start with a short conversation.">ابدأ بمحادثة قصيرة.</h2><p data-ar="اترك بياناتك لتصلك رسالة تعريفية. هذا نموذج تجريبي لا يرسل البيانات حالياً." data-en="Leave your details to receive an introduction. This demo form does not currently transmit data.">اترك بياناتك لتصلك رسالة تعريفية. هذا نموذج تجريبي لا يرسل البيانات حالياً.</p></div>
+<div class="signup"><form id="lead"><label><span data-ar="الاسم" data-en="Name">الاسم</span><input id="name" name="name" autocomplete="name" required></label><label><span data-ar="البريد الإلكتروني" data-en="Email address">البريد الإلكتروني</span><input id="email" name="email" type="email" autocomplete="email" required></label><button class="send" type="submit" data-ar="إرسال الطلب" data-en="Submit request">إرسال الطلب</button><p class="note" data-ar="محتوى نموذجي / تجريبي — رِواق علامة افتراضية." data-en="Sample / Demo Content — Riwaq is a fictional brand.">محتوى نموذجي / تجريبي — رِواق علامة افتراضية.</p><p class="status" id="status" role="status" aria-live="polite"></p></form></div></div></section>
+</main>
+<footer><div class="shell"><span>© رِواق — Sample / Demo Content</span><span data-ar="لا تمثل هذه الصفحة عملاً سابقاً لعميل." data-en="This page does not represent prior client work.">لا تمثل هذه الصفحة عملاً سابقاً لعميل.</span></div></footer>
+<script>
+(()=>{const btn=document.getElementById('lang'),form=document.getElementById('lead'),status=document.getElementById('status');let language='ar';
+function setLanguage(next){language=next;document.documentElement.lang=next;document.documentElement.dir=next==='ar'?'rtl':'ltr';document.querySelectorAll('[data-ar][data-en]').forEach(el=>el.textContent=el.dataset[next]);btn.textContent=next==='ar'?'English':'العربية';status.textContent='';}
+btn.addEventListener('click',()=>setLanguage(language==='ar'?'en':'ar'));
+form.addEventListener('submit',e=>{e.preventDefault();const n=document.getElementById('name'),mail=document.getElementById('email');if(!n.value.trim()||!mail.validity.valid){status.textContent=language==='ar'?'يرجى إدخال الاسم وبريد إلكتروني صحيح.':'Please enter your name and a valid email address.';(n.value.trim()?mail:n).focus();return;}status.textContent=language==='ar'?'تم التحقق للتجربة فقط. لم يتم إرسال البيانات.':'Demo validation passed. No data was sent.';});
+})();
+</script>
+</body>
+</html>
