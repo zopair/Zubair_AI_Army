@@ -4,6 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f1eadf">
+  <meta name="description" content="محتوى نموذجي / تجريبي: صفحة تعريفية ثنائية اللغة لاستوديو استشارات وتطوير مهني افتراضي.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="رِواق للتطوير | نموذج تجريبي">
+  <meta property="og:description" content="محتوى نموذجي / تجريبي: صفحة تعريفية عربية أولاً لاستوديو استشارات وتطوير مهني افتراضي.">
+  <meta property="og:locale" content="ar_AR">
+  <link rel="alternate" hreflang="ar" href="?lang=ar">
+  <link rel="alternate" hreflang="en" href="?lang=en">
+  <link rel="alternate" hreflang="x-default" href="?lang=ar">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"Organization","name":"رِواق للتطوير (نموذج تجريبي)","description":"استوديو استشارات وتطوير مهني افتراضي أُنشئ لعرض نموذج صفحة هبوط ثنائية اللغة."}
+  </script>
   <title>رِواق للتطوير | نموذج تجريبي</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -81,8 +92,8 @@
 <footer><div class="shell"><span>© رِواق — Sample / Demo Content</span><span data-ar="لا تمثل هذه الصفحة عملاً سابقاً لعميل." data-en="This page does not represent prior client work.">لا تمثل هذه الصفحة عملاً سابقاً لعميل.</span></div></footer>
 <script>
 (()=>{const btn=document.getElementById('lang'),form=document.getElementById('lead'),status=document.getElementById('status');let language='ar';
-function setLanguage(next){language=next;document.documentElement.lang=next;document.documentElement.dir=next==='ar'?'rtl':'ltr';document.querySelectorAll('[data-ar][data-en]').forEach(el=>el.textContent=el.dataset[next]);btn.textContent=next==='ar'?'English':'العربية';status.textContent='';}
-btn.addEventListener('click',()=>setLanguage(language==='ar'?'en':'ar'));
+function setLanguage(next){language=next;document.documentElement.lang=next;document.documentElement.dir=next==='ar'?'rtl':'ltr';document.querySelectorAll('[data-ar][data-en]').forEach(el=>el.textContent=el.dataset[next]);btn.textContent=next==='ar'?'English':'العربية';document.title=next==='ar'?'رِواق للتطوير | نموذج تجريبي':'Riwaq Development Studio | Sample Demo';document.querySelector('meta[name="description"]').content=next==='ar'?'محتوى نموذجي / تجريبي: صفحة تعريفية ثنائية اللغة لاستوديو استشارات وتطوير مهني افتراضي.':'Sample / Demo Content: bilingual landing page for a fictional consulting and professional development studio.';document.querySelector('meta[property="og:title"]').content=document.title;document.querySelector('meta[property="og:description"]').content=document.querySelector('meta[name="description"]').content;document.querySelector('meta[property="og:locale"]').content=next==='ar'?'ar_AR':'en_US';status.textContent='';}
+btn.addEventListener('click',()=>setLanguage(language==='ar'?'en':'ar'));if(new URLSearchParams(location.search).get('lang')==='en')setLanguage('en');
 const params=new URLSearchParams(location.search);if(params.get('ac')==='success')status.textContent=language==='ar'?'شكراً لك. تم استلام طلبك.':'Thank you. Your request was received.';if(params.get('ac')==='error')status.textContent=language==='ar'?'تعذر إتمام الطلب. يرجى المحاولة مرة أخرى.':'We could not process the request. Please try again.';
 form.addEventListener('submit',e=>{const n=document.getElementById('name'),mail=document.getElementById('email');if(!n.value.trim()||!mail.validity.valid){e.preventDefault();status.textContent=language==='ar'?'يرجى إدخال الاسم وبريد إلكتروني صحيح.':'Please enter your name and a valid email address.';(n.value.trim()?mail:n).focus();return;}status.textContent=language==='ar'?'جارٍ إرسال طلبك…':'Submitting your request…';});
 })();
