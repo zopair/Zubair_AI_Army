@@ -154,6 +154,8 @@
       }
       toggle.addEventListener('click',()=>setLanguage(lang==='en'?'ar':'en'));
       if(new URLSearchParams(location.search).get('lang')==='ar') setLanguage('ar');
+      if(params.get('ac')==='success') status.textContent=lang==='en'?'Thank you. Your request was received.':'شكراً لك. تم استلام طلبك.';
+      if(params.get('ac')==='error') status.textContent=lang==='en'?'We could not process the request. Please try again.':'تعذر إتمام الطلب. يرجى المحاولة مرة أخرى.';
       const params=new URLSearchParams(location.search);
       if(params.get('ac')==='success') status.textContent=lang==='en'?'Thank you. Your request was received.':'شكراً لك. تم استلام طلبك.';
       if(params.get('ac')==='error') status.textContent=lang==='en'?'We could not process the request. Please try again.':'تعذر إتمام الطلب. يرجى المحاولة مرة أخرى.';
