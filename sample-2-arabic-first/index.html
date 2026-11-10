@@ -69,14 +69,22 @@
 <article class="step"><div class="n">03</div><h3 data-ar="نبدأ التنفيذ" data-en="Move into action">نبدأ التنفيذ</h3><p data-ar="نضع إيقاع متابعة يساعد على التعلم والتحسين المستمر." data-en="Create a review rhythm that supports learning and continuous improvement.">نضع إيقاع متابعة يساعد على التعلم والتحسين المستمر.</p></article>
 </div></div></section>
 <section class="band" id="join"><div class="shell band-inner"><div><p class="kicker" style="color:#e5b38b" data-ar="خطوتك التالية" data-en="Your next step">خطوتك التالية</p><h2 data-ar="ابدأ بمحادثة قصيرة." data-en="Start with a short conversation.">ابدأ بمحادثة قصيرة.</h2><p data-ar="اترك بياناتك لتصلك رسالة تعريفية. هذا نموذج تجريبي لا يرسل البيانات حالياً." data-en="Leave your details to receive an introduction. This demo form does not currently transmit data.">اترك بياناتك لتصلك رسالة تعريفية. هذا نموذج تجريبي لا يرسل البيانات حالياً.</p></div>
-<div class="signup"><form id="lead"><label><span data-ar="الاسم" data-en="Name">الاسم</span><input id="name" name="name" autocomplete="name" required></label><label><span data-ar="البريد الإلكتروني" data-en="Email address">البريد الإلكتروني</span><input id="email" name="email" type="email" autocomplete="email" required></label><button class="send" type="submit" data-ar="إرسال الطلب" data-en="Submit request">إرسال الطلب</button><p class="note" data-ar="محتوى نموذجي / تجريبي — رِواق علامة افتراضية." data-en="Sample / Demo Content — Riwaq is a fictional brand.">محتوى نموذجي / تجريبي — رِواق علامة افتراضية.</p><p class="status" id="status" role="status" aria-live="polite"></p></form></div></div></section>
+<div class="signup"><form id="lead" action="https://YOUR_ACCOUNT.activehosted.com/proc.php" method="POST" novalidate>
+<input type="hidden" name="u" value="YOUR_USER_ID">
+<input type="hidden" name="f" value="FORM_ID">
+<input type="hidden" name="s" value="">
+<input type="hidden" name="c" value="0">
+<input type="hidden" name="m" value="0">
+<input type="hidden" name="act" value="sub">
+<input type="hidden" name="v" value="2"><label><span data-ar="الاسم" data-en="Name">الاسم</span><input id="name" name="fullname" autocomplete="name" required></label><label><span data-ar="البريد الإلكتروني" data-en="Email address">البريد الإلكتروني</span><input id="email" name="email" type="email" autocomplete="email" required></label><button class="send" type="submit" data-ar="إرسال الطلب" data-en="Submit request">إرسال الطلب</button><p class="note" data-ar="محتوى نموذجي / تجريبي — رِواق علامة افتراضية." data-en="Sample / Demo Content — Riwaq is a fictional brand.">محتوى نموذجي / تجريبي — رِواق علامة افتراضية.</p><p class="status" id="status" role="status" aria-live="polite"></p></form></div></div></section>
 </main>
 <footer><div class="shell"><span>© رِواق — Sample / Demo Content</span><span data-ar="لا تمثل هذه الصفحة عملاً سابقاً لعميل." data-en="This page does not represent prior client work.">لا تمثل هذه الصفحة عملاً سابقاً لعميل.</span></div></footer>
 <script>
 (()=>{const btn=document.getElementById('lang'),form=document.getElementById('lead'),status=document.getElementById('status');let language='ar';
 function setLanguage(next){language=next;document.documentElement.lang=next;document.documentElement.dir=next==='ar'?'rtl':'ltr';document.querySelectorAll('[data-ar][data-en]').forEach(el=>el.textContent=el.dataset[next]);btn.textContent=next==='ar'?'English':'العربية';status.textContent='';}
 btn.addEventListener('click',()=>setLanguage(language==='ar'?'en':'ar'));
-form.addEventListener('submit',e=>{e.preventDefault();const n=document.getElementById('name'),mail=document.getElementById('email');if(!n.value.trim()||!mail.validity.valid){status.textContent=language==='ar'?'يرجى إدخال الاسم وبريد إلكتروني صحيح.':'Please enter your name and a valid email address.';(n.value.trim()?mail:n).focus();return;}status.textContent=language==='ar'?'تم التحقق للتجربة فقط. لم يتم إرسال البيانات.':'Demo validation passed. No data was sent.';});
+const params=new URLSearchParams(location.search);if(params.get('ac')==='success')status.textContent=language==='ar'?'شكراً لك. تم استلام طلبك.':'Thank you. Your request was received.';if(params.get('ac')==='error')status.textContent=language==='ar'?'تعذر إتمام الطلب. يرجى المحاولة مرة أخرى.':'We could not process the request. Please try again.';
+form.addEventListener('submit',e=>{const n=document.getElementById('name'),mail=document.getElementById('email');if(!n.value.trim()||!mail.validity.valid){e.preventDefault();status.textContent=language==='ar'?'يرجى إدخال الاسم وبريد إلكتروني صحيح.':'Please enter your name and a valid email address.';(n.value.trim()?mail:n).focus();return;}status.textContent=language==='ar'?'جارٍ إرسال طلبك…':'Submitting your request…';});
 })();
 </script>
 </body>
