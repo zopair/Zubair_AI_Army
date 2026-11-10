@@ -58,4 +58,4 @@ All demo copy and fictional brands are explicitly identified as Sample / Demo Co
 
 ## Task 8 report commit
 
-Initial report creation commit: 33a9fcee2f331b0320a7fb720ff0d73a9d259bed. The commit updating this report with that hash is visible as the latest Task 8 report commit in GitHub history; the original report commit remains separately linked in history.
+Initial report creation commit: 33a9fcee2f331b0320a7fb720ff0d73a9d259bed. Report revision commit: 8202cf488ef7fd9a299954321088d595d16ec23c. Additional final QA commits are listed in the Task 8 row.
