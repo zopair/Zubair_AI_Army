@@ -4,6 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#14283f">
+  <meta name="description" content="Sample / Demo Content: strategic advisory landing page concept for insurance brokerages, available in English and Arabic.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Northstar Advisory | Insurance Brokerage Growth">
+  <meta property="og:description" content="Sample / Demo Content: bilingual advisory landing page concept for insurance brokerage leaders.">
+  <meta property="og:locale" content="en_US">
+  <link rel="alternate" hreflang="en" href="?lang=en">
+  <link rel="alternate" hreflang="ar" href="?lang=ar">
+  <link rel="alternate" hreflang="x-default" href="?lang=en">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"Organization","name":"Northstar Advisory (Sample / Demo)","description":"Fictional advisory firm used for a bilingual landing page portfolio demonstration."}
+  </script>
   <title>Northstar Advisory | Insurance Brokerage Growth</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -130,12 +141,18 @@
       let lang='en';
       function setLanguage(next){
         lang=next;document.documentElement.lang=next;document.documentElement.dir=next==='ar'?'rtl':'ltr';
+        document.title=next==='en'?'Northstar Advisory | Insurance Brokerage Growth':'نورث ستار أدفايزري | نمو شركات وساطة التأمين';
+        document.querySelector('meta[name="description"]').content=next==='en'?'Sample / Demo Content: strategic advisory landing page concept for insurance brokerages, available in English and Arabic.':'محتوى نموذجي / تجريبي: صفحة استشارية ثنائية اللغة لشركات وساطة التأمين.';
+        document.querySelector('meta[property="og:title"]').content=document.title;
+        document.querySelector('meta[property="og:description"]').content=document.querySelector('meta[name="description"]').content;
+        document.querySelector('meta[property="og:locale"]').content=next==='en'?'en_US':'ar_AR';
         document.querySelectorAll('[data-en][data-ar]').forEach(el=>{el.textContent=el.dataset[next]});
         toggle.textContent=next==='en'?'العربية':'English';
         toggle.setAttribute('aria-label',next==='en'?'Switch to Arabic':'Switch to English');
         status.textContent='';
       }
       toggle.addEventListener('click',()=>setLanguage(lang==='en'?'ar':'en'));
+      if(new URLSearchParams(location.search).get('lang')==='ar') setLanguage('ar');
       const params=new URLSearchParams(location.search);
       if(params.get('ac')==='success') status.textContent=lang==='en'?'Thank you. Your request was received.':'شكراً لك. تم استلام طلبك.';
       if(params.get('ac')==='error') status.textContent=lang==='en'?'We could not process the request. Please try again.':'تعذر إتمام الطلب. يرجى المحاولة مرة أخرى.';
