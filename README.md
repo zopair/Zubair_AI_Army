@@ -42,3 +42,15 @@ Unauthorized access or simulation is strictly prohibited under the **Z.ai Army P
 **Maintained by:** Prince Sultan (Master Commander)
 **Company:** Al-Zubair Tec Investment
 **Contact:** alyzopairaly@gmail.com
+
+
+---
+
+## Portfolio samples — bilingual landing pages
+
+This section contains clearly labelled demo work created for an Upwork application. It is not past client work.
+
+- [Sample 1 — Insurance Advisory (EN/AR)](./sample-1-insurance-advisory/)
+- [Sample 2 — Arabic-first Business (AR/EN)](./sample-2-arabic-first/)
+- [Documentation and handover](./docs/)
+- [Project report](./docs/REPORT.md)
