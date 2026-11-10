@@ -103,8 +103,15 @@
           <p data-en="A practical discussion guide for brokerage owners assessing their next stage of growth. Sample / Demo Content." data-ar="دليل نقاش عملي لأصحاب شركات الوساطة لتقييم المرحلة التالية من النمو. محتوى نموذجي / تجريبي.">A practical discussion guide for brokerage owners assessing their next stage of growth. Sample / Demo Content.</p>
         </div>
         <div class="form-area">
-          <form id="leadForm" novalidate>
-            <label><span data-en="Your name" data-ar="الاسم">Your name</span><input id="name" name="name" autocomplete="name" required></label>
+          <form id="leadForm" action="https://YOUR_ACCOUNT.activehosted.com/proc.php" method="POST" novalidate>
+            <input type="hidden" name="u" value="YOUR_USER_ID">
+            <input type="hidden" name="f" value="FORM_ID">
+            <input type="hidden" name="s" value="">
+            <input type="hidden" name="c" value="0">
+            <input type="hidden" name="m" value="0">
+            <input type="hidden" name="act" value="sub">
+            <input type="hidden" name="v" value="2">
+            <label><span data-en="Your name" data-ar="الاسم">Your name</span><input id="name" name="fullname" autocomplete="name" required></label>
             <label><span data-en="Business email" data-ar="البريد الإلكتروني للعمل">Business email</span><input id="email" name="email" type="email" autocomplete="email" required></label>
             <button class="submit" type="submit" data-en="Send me the guide" data-ar="أرسل الدليل إليّ">Send me the guide</button>
             <p class="form-note" data-en="Demo form only — connection is configured in a later integration task." data-ar="نموذج تجريبي فقط — سيتم إعداد الربط في مهمة التكامل اللاحقة.">Demo form only — connection is configured in a later integration task.</p>
@@ -129,14 +136,17 @@
         status.textContent='';
       }
       toggle.addEventListener('click',()=>setLanguage(lang==='en'?'ar':'en'));
+      const params=new URLSearchParams(location.search);
+      if(params.get('ac')==='success') status.textContent=lang==='en'?'Thank you. Your request was received.':'شكراً لك. تم استلام طلبك.';
+      if(params.get('ac')==='error') status.textContent=lang==='en'?'We could not process the request. Please try again.':'تعذر إتمام الطلب. يرجى المحاولة مرة أخرى.';
       form.addEventListener('submit',event=>{
-        event.preventDefault();
         const name=document.getElementById('name'),email=document.getElementById('email');
         if(!name.value.trim()||!email.validity.valid){
+          event.preventDefault();
           status.textContent=lang==='en'?'Please enter your name and a valid email address.':'يرجى إدخال الاسم وبريد إلكتروني صحيح.';
           (name.value.trim()?email:name).focus();return;
         }
-        status.textContent=lang==='en'?'Demo only: form validation passed. No information was sent.':'للتجربة فقط: تم التحقق من البيانات. لم يتم إرسال أي معلومات.';
+        status.textContent=lang==='en'?'Submitting your request…':'جارٍ إرسال طلبك…';
       });
     })();
   </script>
