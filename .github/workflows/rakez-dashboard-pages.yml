@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - "sample-2-arabic-first/**"
       - "sample-3-rakez-performance-command-center/**"
       - ".github/workflows/rakez-dashboard-pages.yml"
   workflow_dispatch:
@@ -14,7 +15,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: rakez-dashboard-pages
+  group: portfolio-pages
   cancel-in-progress: true
 
 jobs:
@@ -30,10 +31,17 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload dashboard site
+      - name: Assemble isolated previews
+        run: |
+          rm -rf _site
+          mkdir -p _site/rakez
+          cp -a sample-2-arabic-first/. _site/
+          cp -a sample-3-rakez-performance-command-center/. _site/rakez/
+
+      - name: Upload portfolio preview
         uses: actions/upload-pages-artifact@v3
         with:
-          path: sample-3-rakez-performance-command-center
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment
