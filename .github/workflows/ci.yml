@@ -1,10 +1,39 @@
+name: Zubair AI Army CI
 
-name: CI Pipeline
-on: [push]
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zubair-ai-army-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Environment
-        run: echo "Zubair AI Army Protocol Active"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run V4 application contract tests
+        run: node --test v4_elite_builder/tests/*.test.mjs
+      - name: Install V4 dependencies
+        working-directory: v4_elite_builder
+        run: npm install --no-audit --no-fund
+      - name: Type-check V4 application
+        working-directory: v4_elite_builder
+        run: npm run typecheck
+      - name: Build V4 application
+        working-directory: v4_elite_builder
+        run: npm run build
+      - name: Compile Python security module
+        run: python -m compileall -q v1_production
