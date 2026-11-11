@@ -58,7 +58,7 @@ const $=id=>document.getElementById(id);
 let selected=null;
 function filtered(){const type=$("projectFilter").value,channel=$("channelFilter").value,days=+$("periodFilter").value,scale=days/30;return data.filter(x=>(type==="all"||x.type===type)&&(channel==="all"||x.channel===channel)).map(x=>({...x,spend:Math.round(x.spend*scale),leads:Math.round(x.leads*scale),q:Math.round(x.q*scale),d:Math.max(0,Math.round(x.d*scale)),revenue:Math.round(x.revenue*scale)}))}
 function calc(rows){return rows.reduce((a,x)=>({spend:a.spend+x.spend,leads:a.leads+x.leads,q:a.q+x.q,d:a.d+x.d,revenue:a.revenue+x.revenue}),{spend:0,leads:0,q:0,d:0,revenue:0})}
-function recommendation(x){const cpql=x.q?x.spend/x.q:Infinity,rate=x.leads?x.q/x.leads:0;if(cpql<360&&rate>.28)return ["Scale","good"];if(cpql>520||rate<.19)return ["Optimize / Pause","bad"];return ["Optimize","watch"]}
+function recommendation(x){const cpql=x.q?x.spend/x.q:Infinity,rate=x.leads?x.q/x.leads:0;if(cpql<360&&rate>.28)return ["زيادة تدريجية","good"];if(cpql>520||rate<.19)return ["تحسين / إيقاف","bad"];return ["تحسين","watch"]}
 function render(){const rows=filtered(),t=calc(rows),cpql=t.q?t.spend/t.q:0,rate=t.leads?t.q/t.leads:0,dc=t.d?t.spend/t.d:0;
 $("spend").textContent=sar(t.spend);$("leads").textContent=money(t.leads);$("qualified").textContent=money(t.q);$("cpql").textContent=sar(cpql);$("depositCost").textContent=t.d?sar(dc):"—";$("leadDelta").textContent=rows.length+" مشاريع ضمن النطاق";$("qualityRate").textContent=(rate*100).toFixed(1)+"% من الـ Leads مؤهلون";$("depositCount").textContent=t.d+" عربون مسجل (Demo)";
 const sorted=[...rows].sort((a,b)=>(a.q? a.spend/a.q:99999)-(b.q?b.spend/b.q:99999));
@@ -99,7 +99,7 @@ const dict={
 "الإنفاق (ألف ريال)":"Spend (SAR thousands)","عملاء مؤهلون":"Qualified leads",
 "الأسبوع 1":"Week 1","الأسبوع 2":"Week 2","الأسبوع 3":"Week 3","الأسبوع 4":"Week 4",
 "المشروع":"Project","المنصة":"Channel","الإنفاق":"Spend","العملاء المحتملون":"Leads","العملاء المؤهلون":"Qualified Leads","تكلفة العميل المؤهل":"Cost per Qualified Lead","العربون":"Deposits","التوصية":"Recommendation",
-"زيادة":"Scale gradually","تحسين / إيقاف":"Optimize / Pause","تحسين":"Optimize",
+"زيادة تدريجية":"Scale gradually","تحسين / إيقاف":"Optimize / Pause","تحسين":"Optimize","ريال سعودي • ضمن الميزانية المخططة":"SAR • Within planned budget","مؤشر جودة الإنفاق":"Spend quality indicator","حجم الطلب":"Demand volume",
 "مشاريع ضمن النطاق":"projects in scope","من الـ Leads مؤهلون":"of leads are qualified","عربون مسجل (Demo)":"recorded deposits (demo)",
 "افحص جودة الجمهور والـ landing page والتتبع قبل ضخ ميزانية إضافية.":"Review audience quality, landing page and tracking before increasing spend.",
 "اختبر زيادة تدريجية 10–15% مع مراقبة Cost per Deposit.":"Test a gradual 10–15% increase while monitoring cost per deposit.",
