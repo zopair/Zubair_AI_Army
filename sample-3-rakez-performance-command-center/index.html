@@ -16,7 +16,7 @@ button,select,input{font:inherit}button{cursor:pointer}.shell{max-width:1500px;m
 <div class="shell">
 <header class="top">
  <div class="brand"><div class="mark">R</div><div><h1>RAKEZ <span style="color:var(--blue)">/</span> Performance Command Center</h1><p>مركز قيادة الأداء التسويقي • Saudi Real Estate Portfolio</p></div></div>
- <div class="top-actions"><span class="pill demo">● نموذج تجريبي — بيانات افتراضية</span><button class="btn" id="resetBtn">إعادة ضبط العرض</button></div>
+ <div class="top-actions"><span class="pill demo">● نموذج تجريبي — بيانات افتراضية</span><button class="btn" id="langBtn" type="button" aria-label="Switch language">English</button><button class="btn" id="resetBtn">إعادة ضبط العرض</button></div>
 </header>
 <section class="hero"><div><h2>لوحة قيادة المحفظة الإعلانية</h2><p>من الإنفاق إلى العميل المؤهل ثم العربون — قرارات مبنية على أداء الأعمال.</p></div>
  <div class="filters"><select id="projectFilter"><option value="all">كل المشاريع</option><option value="resid">سكني</option><option value="com">تجاري</option><option value="lux">فاخر</option></select><select id="channelFilter"><option value="all">كل المنصات</option><option>Snapchat</option><option>TikTok</option><option>Meta</option><option>Google</option></select><select id="periodFilter"><option value="30">آخر 30 يومًا</option><option value="14">آخر 14 يومًا</option><option value="7">آخر 7 أيام</option></select></div>
@@ -72,5 +72,56 @@ simulate(t);
 }
 function simulate(t){const shift=+$("shift").value,eff=+$("eff").value,weak=filtered().filter(x=>recommendation(x)[1]==="bad"),base=weak.reduce((s,x)=>s+x.spend,0),moved=base*shift/100,extra=t.spend?Math.round((t.q/t.spend)*moved*(1+eff/100)*.55):0,newQ=t.q+extra,newCost=newQ?t.spend/newQ:0,old=t.q?t.spend/t.q:0;$("shiftLabel").textContent=shift+"%";$("effLabel").textContent=eff+"%";$("moved").textContent=sar(moved);$("extra").textContent="+"+extra;$("newCpql").textContent=sar(newCost);$("improvement").textContent=(old?((old-newCost)/old*100):0).toFixed(1)+"%"}
 ["projectFilter","channelFilter","periodFilter"].forEach(id=>$(id).addEventListener("change",render));["shift","eff"].forEach(id=>$(id).addEventListener("input",()=>simulate(calc(filtered()))));$("resetBtn").addEventListener("click",()=>{$("projectFilter").value="all";$("channelFilter").value="all";$("periodFilter").value="30";$("shift").value=15;$("eff").value=10;render()});render();
+</script>
+
+<script>
+(()=>{
+const dict={
+"مركز قيادة الأداء التسويقي • Saudi Real Estate Portfolio":"Marketing Performance Command Center • Saudi Real Estate Portfolio",
+"● نموذج تجريبي — بيانات افتراضية":"● DEMO — SYNTHETIC DATA",
+"إعادة ضبط العرض":"Reset view",
+"لوحة قيادة المحفظة الإعلانية":"Advertising Portfolio Command Center",
+"من الإنفاق إلى العميل المؤهل ثم العربون — قرارات مبنية على أداء الأعمال.":"From ad spend to qualified leads and deposits — decisions tied to business outcomes.",
+"كل المشاريع":"All projects","سكني":"Residential","تجاري":"Commercial","فاخر":"Luxury","كل المنصات":"All channels",
+"آخر 30 يومًا":"Last 30 days","آخر 14 يومًا":"Last 14 days","آخر 7 أيام":"Last 7 days",
+"إجمالي الإنفاق الإعلاني":"Total Ad Spend","العملاء المحتملون":"Leads","العملاء المؤهلون":"Qualified Leads",
+"تكلفة العميل المؤهل CPQL":"Cost per Qualified Lead (CPQL)","تكلفة العميل المؤهل (CPQL)":"Cost per Qualified Lead (CPQL)","تكلفة العربون":"Cost per Deposit",
+"اتجاه الإنفاق والعملاء المؤهلين":"Spend & Qualified Lead Trend","مقارنة أسبوعية • آخر 4 أسابيع":"Weekly comparison • Last 4 weeks",
+"كفاءة المنصات الإعلانية":"Paid Channel Efficiency","حصة العملاء المؤهلين":"Share of qualified leads",
+"أداء المشاريع — ترتيب حسب CPQL":"Project Performance — Ranked by CPQL","اختر مشروعًا لتفاصيله":"Ascending order by CPQL",
+"مركز القرارات اليومية":"Daily Decision Center","قواعد تشغيل تجريبية":"Illustrative operating rules",
+"محاكي إعادة توزيع الميزانية":"Budget Reallocation Simulator","سيناريو افتراضي — لا يغيّر أي حملة فعلية":"Illustrative scenario — does not change live campaigns",
+"نسبة نقل الميزانية من الحملات الضعيفة":"Budget shifted away from underperforming campaigns",
+"الزيادة المفترضة في كفاءة الحملات المستقبِلة":"Assumed efficiency gain in receiving campaigns",
+"النموذج يفترض ثبات جودة التتبع وعدم تشبع الجمهور. النتائج تقديرية وليست توقعًا مضمونًا.":"Assumes stable tracking quality and no audience saturation. Outputs are estimates, not guaranteed forecasts.",
+"ميزانية قابلة لإعادة التوزيع":"Budget available to reallocate","عملاء مؤهلون إضافيون (تقديري)":"Estimated additional qualified leads",
+"CPQL بعد السيناريو":"Scenario CPQL","تحسن CPQL":"CPQL improvement",
+"الإنفاق (ألف ريال)":"Spend (SAR thousands)","عملاء مؤهلون":"Qualified leads",
+"الأسبوع 1":"Week 1","الأسبوع 2":"Week 2","الأسبوع 3":"Week 3","الأسبوع 4":"Week 4",
+"المشروع":"Project","المنصة":"Channel","الإنفاق":"Spend","Leads":"Leads","Qualified":"Qualified","CPQL":"CPQL","العربون":"Deposits","التوصية":"Recommendation",
+"زيادة":"Scale gradually","تحسين / إيقاف":"Optimize / Pause","تحسين":"Optimize",
+"مشاريع ضمن النطاق":"projects in scope","من الـ Leads مؤهلون":"of leads are qualified","عربون مسجل (Demo)":"recorded deposits (demo)",
+"افحص جودة الجمهور والـ landing page والتتبع قبل ضخ ميزانية إضافية.":"Review audience quality, landing page and tracking before increasing spend.",
+"اختبر زيادة تدريجية 10–15% مع مراقبة Cost per Deposit.":"Test a gradual 10–15% increase while monitoring cost per deposit.",
+"راجع توزيع الجمهور والكرياتيف واختبر فرضية واحدة في كل مرة.":"Review audience allocation and creative; test one hypothesis at a time.",
+"جميع الأرقام والكيانات والاتجاهات وتوزيعات الفترات بيانات تركيبية لأغراض العرض فقط — لا تمثل أداء شركة راكز. توزيع 7/14 يومًا والاتجاه الأسبوعي توضيحي مبني على نموذج 30 يومًا.":"All figures, projects and trends are synthetic demo data and do not represent Rakez performance. The 7/14-day views and weekly trend are illustrative allocations derived from a 30-day model.",
+"RAKEZ Performance Command Center • Concept Prototype":"RAKEZ Performance Command Center • Concept Prototype"
+};
+const $=id=>document.getElementById(id);
+let lang="ar";
+function translateTree(root){
+const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+nodes.forEach(n=>{let s=n.nodeValue;for(const [a,b] of Object.entries(dict))if(s.includes(a))s=s.split(a).join(b);n.nodeValue=s;});
+}
+const originalRender=window.render;
+window.render=function(){originalRender();if(lang==="en")translateTree(document.querySelector(".shell"));};
+function setLang(next){
+lang=next;document.documentElement.lang=next;document.documentElement.dir=next==="ar"?"rtl":"ltr";
+$("langBtn").textContent=next==="ar"?"English":"العربية";
+if(next==="en"){translateTree(document.querySelector(".shell"));}else{location.reload();}
+}
+$("langBtn").addEventListener("click",()=>setLang(lang==="ar"?"en":"ar"));
+})();
 </script>
 </body></html>
