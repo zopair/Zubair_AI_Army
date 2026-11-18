@@ -1,0 +1,47 @@
+{
+  "title": "Five Projects. One Technology Vision.",
+  "brand": "AL-ZUBAIR TEC INVESTMENT",
+  "github": "https://github.com/zopair",
+  "language": "English",
+  "format": {
+    "container": "mp4",
+    "video": "H.264",
+    "audio": "AAC",
+    "width": 1280,
+    "height": 720,
+    "fps": 25
+  },
+  "projects": [
+    {
+      "name": "Zubair AI Army",
+      "url": "https://github.com/zopair/Zubair_AI_Army",
+      "narration": "First, Zubair AI Army: a modular technology investment and automation ecosystem. Its documented modules cover API security auditing, AI-assisted commerce, sovereign core concepts, and professional digital services. Its stack includes Next.js, TypeScript, Prisma, Bun, Docker, GitHub Actions, and Prometheus."
+    },
+    {
+      "name": "CLT Sovereign OS",
+      "url": "https://github.com/zopair/Zubair-Hunter-AI",
+      "narration": "Second, CLT Sovereign OS: a private-first digital environment concept. The repository describes an ecosystem of sixty specialized AI agents spanning finance, marketing, technology, and support, with an emphasis on private and encrypted operation."
+    },
+    {
+      "name": "Sovereign AI Arsenal",
+      "url": "https://github.com/zopair/Sovereign-AI-Arsenal",
+      "narration": "Third, Sovereign AI Arsenal: a modular intelligence platform for discovering, evaluating, classifying, and monitoring AI repositories. It brings together semantic vector search, trend analysis, asynchronous processing, FastAPI, PostgreSQL, and Docker."
+    },
+    {
+      "name": "SINC-OS",
+      "url": "https://github.com/zopair/SINC-OS",
+      "narration": "Fourth, SINC OS: an autonomous media workflow built around responsible handling of owned or explicitly licensed content. It supports vertical formatting, private-first review before publishing, attribution and license checks, and automated cleanup."
+    },
+    {
+      "name": "CLT Platform & Core",
+      "url": [
+        "https://github.com/zopair/CLT-Platform",
+        "https://github.com/zopair/CLT-Core-Monorepo"
+      ],
+      "narration": "Fifth, CLT Platform and Core: the orchestration and shared foundation layer of the Cloudy Laptop ecosystem. The platform repository identifies itself as the Sovereign Orchestrator. Explore both repositories for their current implementation details."
+    }
+  ],
+  "opening": "Al Zubair Tech Investment. Five technology projects, one vision: engineering intelligent systems, sovereign digital infrastructure, and practical automation.",
+  "closing": "Al Zubair Tech Investment. Independent technology, AI systems, and sovereign digital infrastructure. Explore the projects at GitHub dot com slash zopair.",
+  "production_notes": "Narration is synthesized in English using eSpeak. Artwork and ambient bed are generated specifically for this film. Avoid claims not supported by repository documentation."
+}
