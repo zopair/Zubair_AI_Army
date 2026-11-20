@@ -58,6 +58,7 @@ async function githubJson(env, path, fetchImpl, requestBudget) {
   try {
     response = await fetchImpl(`https://api.github.com${path}`, {
       method: "GET",
+      redirect: "manual",
       headers: {
         authorization: `Bearer ${env.GITHUB_TOKEN}`,
         accept: "application/vnd.github+json",
