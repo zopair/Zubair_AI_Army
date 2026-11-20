@@ -52,7 +52,7 @@ Or:
 { "operation": "repository_documentation_audit" }
 ```
 
-A new successful submission returns HTTP `202` with `task_id`, `operation`, and `status: "queued"`. An optional `Idempotency-Key` header (8–128 visible ASCII characters) makes client retries safe: repeating the same key and operation returns the original task with HTTP `200` and does not enqueue duplicate work. Reusing a key for a different operation returns HTTP `409`. Unsupported operations, malformed keys, and malformed/oversized JSON are rejected.
+A new successful submission returns HTTP `202` with `task_id`, `operation`, and `status: "queued"`. An optional `Idempotency-Key` header (8–128 visible ASCII characters) makes client retries safe: repeating the same key and operation returns the original task with HTTP `200` and does not enqueue duplicate work or consume another intake slot. Reusing a key for a different operation returns HTTP `409`. The single-owner intake is capped at 20 new valid submissions per fixed 60-second window; further submissions receive HTTP `429` with a retry hint. The counter is persisted atomically in D1 and fails closed with HTTP `503` if the limiter cannot be checked. Unsupported operations, malformed keys, and malformed/oversized JSON are rejected.
 
 ### Read task status
 
@@ -97,7 +97,7 @@ The Node tests cover authentication, route validation, queue lifecycle and the a
 
 - No model inference provider is connected.
 - No autonomous tool discovery or multi-agent orchestration exists.
-- No API-level rate limiter or tenant isolation is implemented. Idempotency is optional and scoped to a caller-provided request key; the prototype remains single-owner.
+- Task intake has a D1-backed single-owner limit of 20 new valid submissions per fixed 60-second window. This is not per-user or per-IP throttling; the prototype remains single-owner and does not provide tenant isolation. Idempotency is optional and scoped to a caller-provided request key.
 - The recursive-tree fallback now shares a 50-request ceiling across metadata, recursive-tree and fallback-tree calls. Rate-limit responses stop the task without a blind queue retry.
 - The Worker configuration contains a D1 ID placeholder until deployment is deliberately configured.
 - The root repository has no explicit `LICENSE` file on the audited default branch.
