@@ -45,6 +45,17 @@ async function updateTask(
   ).bind(status, result, error, errorCode, taskId).run();
 }
 
+async function failQueuedTask(
+  env: Env,
+  taskId: string,
+  error: string,
+  errorCode: string
+): Promise<void> {
+  await env.DB.prepare(
+    "UPDATE tasks SET status='failed', result=NULL, error=?, error_code=?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='queued'"
+  ).bind(error, errorCode, taskId).run();
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -143,7 +154,7 @@ export default {
       try {
         await env.TASK_QUEUE.send({ task_id: id, operation });
       } catch {
-        await updateTask(env, id, "failed", null, "Queue unavailable", "QUEUE_UNAVAILABLE");
+        await failQueuedTask(env, id, "Queue unavailable", "QUEUE_UNAVAILABLE");
         return json({ error: "Queue unavailable", task_id: id }, 503);
       }
 
@@ -164,6 +175,22 @@ export default {
   async queue(batch: MessageBatch<TaskMessage>, env: Env): Promise<void> {
     for (const message of batch.messages) {
       const { task_id: taskId, operation } = message.body;
+      const claim = await env.DB.prepare(
+        "UPDATE tasks SET status='dispatched', updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='queued' RETURNING id"
+      ).bind(taskId).first();
+
+      if (!claim) {
+        const current = await env.DB.prepare(
+          "SELECT id, status FROM tasks WHERE id=?"
+        ).bind(taskId).first();
+        if (!current || ["completed", "failed", "dispatched"].includes(current.status)) {
+          message.ack();
+        } else {
+          message.retry({ delaySeconds: 30 });
+        }
+        continue;
+      }
+
       try {
         const result = await executeAllowlistedTask(operation, env);
         await updateTask(env, taskId, "completed", JSON.stringify(result), null);
@@ -180,6 +207,25 @@ export default {
         const safeMessage = error instanceof Error ? error.message : "Task execution failed";
         await updateTask(env, taskId, "failed", null, safeMessage, taskErrorCode(error));
         message.ack();
+      }
+    }
+  },
+
+  async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
+    const staleTasks = await env.DB.prepare(
+      "SELECT id, operation FROM tasks WHERE status IN ('queued', 'dispatched') AND updated_at <= strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 minutes') ORDER BY created_at LIMIT 20"
+    ).all();
+
+    for (const task of staleTasks.results ?? []) {
+      const reset = await env.DB.prepare(
+        "UPDATE tasks SET status='queued', updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status IN ('queued', 'dispatched') AND updated_at <= strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 minutes') RETURNING id"
+      ).bind(task.id).first();
+      if (!reset) continue;
+
+      try {
+        await env.TASK_QUEUE.send({ task_id: task.id, operation: task.operation });
+      } catch {
+        await failQueuedTask(env, task.id, "Queue unavailable during stale-task recovery", "QUEUE_UNAVAILABLE");
       }
     }
   }

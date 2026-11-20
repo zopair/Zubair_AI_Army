@@ -22,13 +22,33 @@ class MockDB {
           if (idempotencyKey && [...db.rows.values()].some((item) => item.idempotency_key === idempotencyKey)) {
             return { success: true, meta: { changes: 0 } };
           }
-          db.rows.set(id, { id, task_text: taskText, operation, idempotency_key: idempotencyKey, status: "queued" });
+          db.rows.set(id, { id, task_text: taskText, operation, idempotency_key: idempotencyKey, status: "queued", updated_at: new Date().toISOString() });
           return { success: true, meta: { changes: 1 } };
+        }
+        if (/UPDATE tasks SET status=\?/.test(sql)) {
+          const [status, result, error, errorCode, taskId] = values;
+          const row = db.rows.get(taskId);
+          if (row) Object.assign(row, { status, result, error, error_code: errorCode, updated_at: new Date().toISOString() });
+          return { success: true, meta: { changes: row ? 1 : 0 } };
         }
         return { success: true, meta: { changes: 1 } };
       },
       async first() {
         db.calls.push({ sql, values });
+        if (/UPDATE tasks SET status='dispatched'/.test(sql)) {
+          const row = db.rows.get(values[0]);
+          if (!row || row.status !== "queued") return null;
+          row.status = "dispatched";
+          row.updated_at = new Date().toISOString();
+          return { id: row.id };
+        }
+        if (/UPDATE tasks SET status='queued'/.test(sql) && sql.includes("updated_at <=")) {
+          const row = db.rows.get(values[0]);
+          if (!row || !["queued", "dispatched"].includes(row.status) || Date.parse(row.updated_at) > Date.now() - 20 * 60 * 1000) return null;
+          row.status = "queued";
+          row.updated_at = new Date().toISOString();
+          return { id: row.id };
+        }
         if (/INSERT INTO api_rate_limits/.test(sql)) {
           if (db.failRateLimit) throw new Error("D1 unavailable");
           if (db.rateLimitWindowStartedAt === null) db.rateLimitWindowStartedAt = Math.floor(Date.now() / 1000);
@@ -40,16 +60,25 @@ class MockDB {
         }
         if (sql.includes("WHERE id=?")) return db.rows.get(values[0]) || db.row;
         return db.row;
+      },
+      async all() {
+        db.calls.push({ sql, values: [] });
+        const cutoff = Date.now() - 20 * 60 * 1000;
+        return { results: [...db.rows.values()].filter((row) =>
+          ["queued", "dispatched"].includes(row.status) && Date.parse(row.updated_at) <= cutoff
+        ).map(({ id, operation, status }) => ({ id, operation, status })) };
       }
     });
     return {
       ...statement(),
-      bind(...values) {
-        return statement(values);
-      }
+      bind(...values) { return statement(values); }
     };
   }
 }
+function seedTask(bindings, id, operation, status = "queued", updatedAt = new Date().toISOString()) {
+  bindings.DB.rows.set(id, { id, operation, status, updated_at: updatedAt, created_at: updatedAt });
+}
+
 function env(overrides = {}) {
   const bindings = {
     DB: new MockDB(),
@@ -163,6 +192,7 @@ test("task lookup returns persisted operation and result", async () => {
 
 test("queue execution persists completed result and acknowledges the message", async () => {
   const bindings = env();
+  seedTask(bindings, "12345678-1234-1234-1234-123456789012", "repository_inventory");
   const originalFetch = globalThis.fetch;
   let fetchCall = 0;
   globalThis.fetch = async () => {
@@ -191,7 +221,7 @@ test("queue execution persists completed result and acknowledges the message", a
 
   assert.equal(acknowledged, true);
   assert.equal(retried, false);
-  const update = bindings.DB.calls.find((call) => /UPDATE tasks/.test(call.sql));
+  const update = bindings.DB.calls.find((call) => call.sql.includes("SET status=?,"));
   assert.ok(update);
   assert.equal(update.values[0], "completed");
   const result = JSON.parse(update.values[1]);
@@ -301,6 +331,7 @@ test("task intake fails closed when the D1 rate limiter is unavailable", async (
 
 test("queue persists a stable error code when GitHub rate limits a task", async () => {
   const bindings = env();
+  seedTask(bindings, "12345678-1234-1234-1234-123456789012", "repository_inventory");
   const originalFetch = globalThis.fetch;
   let fetchCall = 0;
   globalThis.fetch = async () => {
@@ -323,7 +354,7 @@ test("queue persists a stable error code when GitHub rate limits a task", async 
     globalThis.fetch = originalFetch;
   }
 
-  const update = bindings.DB.calls.find((call) => /UPDATE tasks/.test(call.sql));
+  const update = bindings.DB.calls.find((call) => call.sql.includes("SET status=?,"));
   assert.equal(acknowledged, true);
   assert.ok(update);
   assert.equal(update.values[0], "failed");
@@ -332,6 +363,7 @@ test("queue persists a stable error code when GitHub rate limits a task", async 
 
 test("queue records request-budget exhaustion as a distinct terminal diagnostic", async () => {
   const bindings = env();
+  seedTask(bindings, "12345678-1234-1234-1234-123456789012", "repository_inventory");
   const originalFetch = globalThis.fetch;
   let fetchCall = 0;
   globalThis.fetch = async () => {
@@ -365,9 +397,72 @@ test("queue records request-budget exhaustion as a distinct terminal diagnostic"
     globalThis.fetch = originalFetch;
   }
 
-  const update = bindings.DB.calls.find((call) => /UPDATE tasks/.test(call.sql));
+  const update = bindings.DB.calls.find((call) => call.sql.includes("SET status=?,"));
   assert.equal(acknowledged, true);
   assert.ok(update);
   assert.equal(update.values[0], "failed");
   assert.equal(update.values[3], "GITHUB_REQUEST_BUDGET_EXCEEDED");
+});
+
+test("queue acknowledges completed duplicate deliveries without repeating GitHub reads", async () => {
+  const bindings = env();
+  seedTask(bindings, "12345678-1234-1234-1234-123456789012", "repository_inventory", "completed");
+  const originalFetch = globalThis.fetch;
+  let fetchCalls = 0;
+  globalThis.fetch = async () => { fetchCalls += 1; throw new Error("Must not execute a completed task"); };
+  let acknowledged = false;
+  try {
+    await worker.queue({
+      messages: [{
+        body: { task_id: "12345678-1234-1234-1234-123456789012", operation: "repository_inventory" },
+        attempts: 2,
+        ack() { acknowledged = true; },
+        retry() { throw new Error("Completed duplicate must be acknowledged"); }
+      }]
+    }, bindings);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+  assert.equal(acknowledged, true);
+  assert.equal(fetchCalls, 0);
+});
+
+test("scheduled recovery requeues only stale queued or dispatched tasks", async () => {
+  const bindings = env();
+  const staleId = "12345678-1234-1234-1234-123456789012";
+  const staleQueuedId = "32345678-1234-1234-1234-123456789012";
+  const recentId = "22345678-1234-1234-1234-123456789012";
+  seedTask(bindings, staleId, "repository_inventory", "dispatched", new Date(Date.now() - 21 * 60 * 1000).toISOString());
+  seedTask(bindings, staleQueuedId, "repository_documentation_audit", "queued", new Date(Date.now() - 22 * 60 * 1000).toISOString());
+  seedTask(bindings, recentId, "repository_documentation_audit", "dispatched");
+  await worker.scheduled({ cron: "*/5 * * * *" }, bindings);
+  assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 2);
+  assert.deepEqual(bindings.TASK_QUEUE_MESSAGES[0], { task_id: staleId, operation: "repository_inventory" });
+  assert.deepEqual(bindings.TASK_QUEUE_MESSAGES[1], { task_id: staleQueuedId, operation: "repository_documentation_audit" });
+  assert.equal(bindings.DB.rows.get(staleId).status, "queued");
+  assert.equal(bindings.DB.rows.get(staleQueuedId).status, "queued");
+  assert.equal(bindings.DB.rows.get(recentId).status, "dispatched");
+});
+
+test("queue acknowledges a currently dispatched duplicate while cron owns recovery", async () => {
+  const bindings = env();
+  seedTask(bindings, "12345678-1234-1234-1234-123456789012", "repository_inventory", "dispatched");
+  const originalFetch = globalThis.fetch;
+  let fetchCalls = 0;
+  globalThis.fetch = async () => { fetchCalls += 1; throw new Error("A claimed task must not execute twice"); };
+  let acknowledged = false;
+  try {
+    await worker.queue({
+      messages: [{
+        body: { task_id: "12345678-1234-1234-1234-123456789012", operation: "repository_inventory" },
+        attempts: 2,
+        ack() { acknowledged = true; },
+        retry() { throw new Error("An in-flight duplicate must be acknowledged"); }
+      }]
+    }, bindings);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+  assert.equal(acknowledged, true);
+  assert.equal(fetchCalls, 0);
 });
