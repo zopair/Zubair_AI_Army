@@ -8,7 +8,7 @@ A private, single-owner task-processing prototype inside `zopair/Zubair_AI_Army`
 
 - Cloudflare Worker exposes a small authenticated task API.
 - D1 stores task status, results, stable error codes, and idempotency state.
-- Cloudflare Queue dispatches allowlisted work with an atomic `queued` → `dispatched` claim; duplicate deliveries for already claimed or terminal tasks are acknowledged without repeating repository reads.
+- Cloudflare Queue dispatches allowlisted work with an atomic `queued` → `dispatched` claim; `max_batch_size = 1` gives each task its own Worker invocation, keeping its 50 GitHub requests within the Workers Free external-subrequest ceiling. Duplicate deliveries for already claimed or terminal tasks are acknowledged without repeating repository reads.
 - A five-minute Cron Trigger recovers queued/dispatched tasks older than 20 minutes, covering lost deliveries and worker interruptions.
 - The executor uses a small explicit capability registry and currently supports only:
   - `repository_inventory`
