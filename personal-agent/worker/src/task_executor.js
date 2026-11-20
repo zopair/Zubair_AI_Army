@@ -90,7 +90,7 @@ async function githubJson(env, path, fetchImpl, requestBudget) {
   }
 }
 
-const MAX_TREE_OBJECTS = 1000;
+const MAX_TREE_OBJECTS = 50;
 
 async function recoverTreeFiles(env, owner, repository, rootTreeSha, fetchImpl, requestBudget) {
   const encodedOwner = encodeURIComponent(owner);
