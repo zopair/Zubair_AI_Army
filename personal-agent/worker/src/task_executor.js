@@ -125,13 +125,14 @@ function documentationAudit(snapshot) {
   const paths = new Set(snapshot.files.map((file) => file.path));
   const requiredDocuments = ["README.md", "LICENSE", "CONTRIBUTING.md", "SECURITY.md"];
   const missingDocuments = requiredDocuments.filter((path) => !paths.has(path));
-  const testFiles = snapshot.files.filter((file) =>
-    /(^|\\/)(tests?|__tests__)(\\/|$)/i.test(file.path) ||
-    /(^|\\.)test\\.[^.]+$/i.test(file.path)
-  );
+  const testFiles = snapshot.files.filter((file) => {
+    const segments = file.path.split("/");
+    return segments.some((segment) => ["test", "tests", "__tests__"].includes(segment)) ||
+      file.path.includes(".test.");
+  });
   const workflowFiles = snapshot.files.filter((file) =>
     file.path.startsWith(".github/workflows/") &&
-    /\\.ya?ml$/i.test(file.path)
+    (file.path.endsWith(".yml") || file.path.endsWith(".yaml"))
   );
 
   return {
