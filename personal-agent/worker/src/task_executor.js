@@ -10,6 +10,32 @@ export class RetryableTaskError extends Error {
   }
 }
 
+export class RateLimitExceededError extends Error {
+  constructor() {
+    super("GitHub API rate limit reached; task stopped without retry");
+    this.name = "RateLimitExceededError";
+  }
+}
+
+export class RequestBudgetExceededError extends Error {
+  constructor(limit) {
+    super(`GitHub API request budget exceeded (${limit} requests)`);
+    this.name = "RequestBudgetExceededError";
+  }
+}
+
+const MAX_API_REQUESTS_PER_TASK = 50;
+
+function createRequestBudget(limit = MAX_API_REQUESTS_PER_TASK) {
+  let used = 0;
+  return {
+    consume() {
+      if (used >= limit) throw new RequestBudgetExceededError(limit);
+      used += 1;
+    }
+  };
+}
+
 function parseRepository(value) {
   if (typeof value !== "string") throw new Error("Repository configuration is invalid");
   const parts = value.split("/");
@@ -19,10 +45,12 @@ function parseRepository(value) {
   return parts;
 }
 
-async function githubJson(env, path, fetchImpl) {
+async function githubJson(env, path, fetchImpl, requestBudget) {
   if (typeof env.GITHUB_TOKEN !== "string" || !env.GITHUB_TOKEN) {
     throw new Error("GitHub read token is not configured");
   }
+
+  requestBudget.consume();
 
   let response;
   try {
@@ -43,7 +71,10 @@ async function githubJson(env, path, fetchImpl) {
   const rateLimited = response.status === 429 ||
     (response.status === 403 && response.headers.get("x-ratelimit-remaining") === "0");
 
-  if (rateLimited || response.status >= 500) {
+  if (rateLimited) {
+    throw new RateLimitExceededError();
+  }
+  if (response.status >= 500) {
     throw new RetryableTaskError();
   }
   if (!response.ok) {
@@ -61,7 +92,7 @@ async function githubJson(env, path, fetchImpl) {
 
 const MAX_TREE_OBJECTS = 1000;
 
-async function recoverTreeFiles(env, owner, repository, rootTreeSha, fetchImpl) {
+async function recoverTreeFiles(env, owner, repository, rootTreeSha, fetchImpl, requestBudget) {
   const encodedOwner = encodeURIComponent(owner);
   const encodedRepository = encodeURIComponent(repository);
   const pending = [{ sha: rootTreeSha, prefix: "" }];
@@ -81,7 +112,8 @@ async function recoverTreeFiles(env, owner, repository, rootTreeSha, fetchImpl) 
     const tree = await githubJson(
       env,
       `/repos/${encodedOwner}/${encodedRepository}/git/trees/${encodeURIComponent(current.sha)}`,
-      fetchImpl
+      fetchImpl,
+      requestBudget
     );
 
     if (!Array.isArray(tree.tree)) {
@@ -110,13 +142,15 @@ async function recoverTreeFiles(env, owner, repository, rootTreeSha, fetchImpl) 
 }
 
 async function loadRepositoryTree(env, fetchImpl) {
+  const requestBudget = createRequestBudget();
   const [owner, repository] = parseRepository(env.GITHUB_REPOSITORY);
   const encodedOwner = encodeURIComponent(owner);
   const encodedRepository = encodeURIComponent(repository);
   const metadata = await githubJson(
     env,
     `/repos/${encodedOwner}/${encodedRepository}`,
-    fetchImpl
+    fetchImpl,
+    requestBudget
   );
 
   if (typeof metadata.default_branch !== "string" || !metadata.default_branch) {
@@ -126,7 +160,8 @@ async function loadRepositoryTree(env, fetchImpl) {
   const tree = await githubJson(
     env,
     `/repos/${encodedOwner}/${encodedRepository}/git/trees/${encodeURIComponent(metadata.default_branch)}?recursive=1`,
-    fetchImpl
+    fetchImpl,
+    requestBudget
   );
 
   if (!Array.isArray(tree.tree)) {
@@ -140,7 +175,7 @@ async function loadRepositoryTree(env, fetchImpl) {
     if (typeof tree.sha !== "string" || !tree.sha) {
       throw new Error("GitHub did not provide the truncated root tree SHA");
     }
-    files = await recoverTreeFiles(env, owner, repository, tree.sha, fetchImpl);
+    files = await recoverTreeFiles(env, owner, repository, tree.sha, fetchImpl, requestBudget);
   }
 
   return {
