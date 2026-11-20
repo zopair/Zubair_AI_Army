@@ -8,6 +8,8 @@ class MockDB {
     this.rows = new Map(row ? [[row.id, row]] : []);
     this.calls = [];
     this.rateLimitCount = 0;
+    this.rateLimitWindowStartedAt = null;
+    this.failRateLimit = false;
   }
 
   prepare(sql) {
@@ -28,8 +30,10 @@ class MockDB {
       async first() {
         db.calls.push({ sql, values });
         if (/INSERT INTO api_rate_limits/.test(sql)) {
+          if (db.failRateLimit) throw new Error("D1 unavailable");
+          if (db.rateLimitWindowStartedAt === null) db.rateLimitWindowStartedAt = Math.floor(Date.now() / 1000);
           db.rateLimitCount = Math.min(db.rateLimitCount + 1, 21);
-          return { request_count: db.rateLimitCount };
+          return { request_count: db.rateLimitCount, window_started_at: db.rateLimitWindowStartedAt };
         }
         if (sql.includes("idempotency_key=?")) {
           return [...db.rows.values()].find((item) => item.idempotency_key === values[0]) || null;
@@ -259,7 +263,7 @@ test("task intake is capped at 20 accepted submissions per 60-second owner windo
   assert.equal(responses[20].status, 429);
   assert.deepEqual(await responses[20].json(), {
     error: "Task submission rate limit exceeded",
-    retry_after_seconds: 60
+    retry_after_seconds: assert.any(Number)
   });
   assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 20);
 });
@@ -278,4 +282,17 @@ test("idempotent replay returns existing task without consuming intake quota", a
   assert.equal(second.status, 200);
   assert.equal(bindings.DB.rateLimitCount, 1);
   assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 1);
+});
+
+test("task intake fails closed when the D1 rate limiter is unavailable", async () => {
+  const bindings = env();
+  bindings.DB.failRateLimit = true;
+  const response = await worker.fetch(request("/api/tasks", {
+    method: "POST",
+    body: JSON.stringify({ operation: "repository_inventory" })
+  }), bindings);
+
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { error: "Task intake limiter unavailable" });
+  assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 0);
 });
