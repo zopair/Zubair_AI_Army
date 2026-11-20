@@ -192,6 +192,7 @@ test("task lookup returns persisted operation and result", async () => {
 
 test("queue execution persists completed result and acknowledges the message", async () => {
   const bindings = env();
+  seedTask(bindings, "12345678-1234-1234-1234-123456789012", "repository_inventory");
   const originalFetch = globalThis.fetch;
   let fetchCall = 0;
   globalThis.fetch = async () => {
@@ -330,6 +331,7 @@ test("task intake fails closed when the D1 rate limiter is unavailable", async (
 
 test("queue persists a stable error code when GitHub rate limits a task", async () => {
   const bindings = env();
+  seedTask(bindings, "12345678-1234-1234-1234-123456789012", "repository_inventory");
   const originalFetch = globalThis.fetch;
   let fetchCall = 0;
   globalThis.fetch = async () => {
@@ -361,6 +363,7 @@ test("queue persists a stable error code when GitHub rate limits a task", async 
 
 test("queue records request-budget exhaustion as a distinct terminal diagnostic", async () => {
   const bindings = env();
+  seedTask(bindings, "12345678-1234-1234-1234-123456789012", "repository_inventory");
   const originalFetch = globalThis.fetch;
   let fetchCall = 0;
   globalThis.fetch = async () => {
@@ -399,4 +402,40 @@ test("queue records request-budget exhaustion as a distinct terminal diagnostic"
   assert.ok(update);
   assert.equal(update.values[0], "failed");
   assert.equal(update.values[3], "GITHUB_REQUEST_BUDGET_EXCEEDED");
+});
+
+test("queue acknowledges completed duplicate deliveries without repeating GitHub reads", async () => {
+  const bindings = env();
+  seedTask(bindings, "12345678-1234-1234-1234-123456789012", "repository_inventory", "completed");
+  const originalFetch = globalThis.fetch;
+  let fetchCalls = 0;
+  globalThis.fetch = async () => { fetchCalls += 1; throw new Error("Must not execute a completed task"); };
+  let acknowledged = false;
+  try {
+    await worker.queue({
+      messages: [{
+        body: { task_id: "12345678-1234-1234-1234-123456789012", operation: "repository_inventory" },
+        attempts: 2,
+        ack() { acknowledged = true; },
+        retry() { throw new Error("Completed duplicate must be acknowledged"); }
+      }]
+    }, bindings);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+  assert.equal(acknowledged, true);
+  assert.equal(fetchCalls, 0);
+});
+
+test("scheduled recovery requeues only stale queued or dispatched tasks", async () => {
+  const bindings = env();
+  const staleId = "12345678-1234-1234-1234-123456789012";
+  const recentId = "22345678-1234-1234-1234-123456789012";
+  seedTask(bindings, staleId, "repository_inventory", "dispatched", new Date(Date.now() - 21 * 60 * 1000).toISOString());
+  seedTask(bindings, recentId, "repository_documentation_audit", "dispatched");
+  await worker.scheduled({ cron: "*/5 * * * *" }, bindings);
+  assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 1);
+  assert.deepEqual(bindings.TASK_QUEUE_MESSAGES[0], { task_id: staleId, operation: "repository_inventory" });
+  assert.equal(bindings.DB.rows.get(staleId).status, "queued");
+  assert.equal(bindings.DB.rows.get(recentId).status, "dispatched");
 });
