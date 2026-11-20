@@ -50,11 +50,11 @@ The earlier recursive Git tree audit returned 129 entries with `truncated=false`
 4. Ordinary replays using the same idempotency key return the existing task without a second queue message.
 5. GitHub API reads share a 50-request budget across repository metadata and recursive/fallback tree traversal. Rate-limit responses stop the task without blind retries.
 6. Automatic HTTP redirects are disabled so a redirect chain cannot silently consume external subrequests beyond the application budget.
-7. Queue processing atomically claims queued tasks as dispatched. Duplicate deliveries for dispatched or terminal tasks are acknowledged without repeating repository reads.
+7. Queue processing atomically claims queued tasks as dispatched. Queue max_batch_size is set to 1 so one 50-request task maps to one Worker invocation. Duplicate deliveries for dispatched or terminal tasks are acknowledged without repeating repository reads.
 8. A five-minute Cron Trigger recovers queued/dispatched tasks older than 20 minutes. Each recovery invocation handles at most 20 tasks.
 9. Task status exposes stable error codes for rate limiting, request-budget exhaustion, transient GitHub failures, queue unavailability and generic failures.
 10. A small capability registry exposes only read-only handlers. Any future write capability must have an explicit approval path before registration.
-11. A strict, dependency-free Wrangler preflight validates the entrypoint, D1 binding/UUID/migration directory, Queue wiring, repository reference, secret placement and required Cron Trigger. Strict mode blocks while the D1 ID is a placeholder.
+11. A strict, dependency-free Wrangler preflight validates the entrypoint, D1 binding/UUID/migration directory, Queue wiring and batch size, repository reference, secret placement and required Cron Trigger. Strict mode blocks while the D1 ID is a placeholder.
 12. CI covers Worker routes, executor behavior, all five SQL migrations, configuration template validation, repository preflight and the V4 application build.
 
 ### Not implemented / not proven
@@ -99,7 +99,7 @@ The existing two-operation allowlist is safer and cheaper than a general-purpose
 | Priority | Finding | Why it matters | Current handling / next action |
 |---|---|---|---|
 | P0 | D1 database ID is a placeholder | Worker cannot be deployed with the committed config unchanged | Strict preflight blocks deployment until the real D1 ID and Queue resources are configured |
-| P1 | Free-plan invocation limits are tight | A 50-request GitHub budget must not accidentally exceed the Workers Free external-subrequest limit | Shared 50-request budget plus manual redirect handling; keep other external fetches out of this invocation |
+| P1 | Free-plan invocation limits are tight | A 50-request GitHub budget must not accidentally exceed the Workers Free external-subrequest limit | Shared 50-request budget, manual redirects and max_batch_size=1; keep other external fetches out of this invocation |
 | P1 | Single-owner intake cap is not tenant isolation | Future users would share one global quota | Keep single-owner semantics until authentication and tenant identity are designed |
 | P1 | No DLQ is configured | Raw queue messages are not retained after retry exhaustion | Monitor real failures first; terminal task diagnostics and Cron recovery are in place |
 | P2 | Root license absent | External redistribution terms remain unclear | Select a license deliberately; do not infer rights from the authorship notice |
@@ -107,7 +107,7 @@ The existing two-operation allowlist is safer and cheaper than a general-purpose
 
 ## 7. Resource policy
 
-- Maximum 50 GitHub external requests per task, shared across metadata and tree traversal; stop at the first rate-limit response.
+- Maximum 50 GitHub external requests per task, shared across metadata and tree traversal; stop at the first rate-limit response. Queue max_batch_size=1 ensures no second task shares the same external-subrequest budget.
 - Do not follow HTTP redirects automatically; a redirect chain would otherwise consume additional external subrequests.
 - Maximum 10 seconds per GitHub request.
 - Maximum 20 new valid task submissions per fixed 60-second window for the current single-owner API.
@@ -128,7 +128,7 @@ Cloudflare Free limits relevant to this design: 50 external subrequests per Work
 
 ### Phase B — bounded execution
 - [x] Enforce a shared 50-request budget and stop on GitHub rate limits.
-- [x] Prevent automatic redirects from bypassing the external-request budget.
+- [x] Prevent automatic redirects from bypassing the external-request budget.\n- [x] Set Queue max_batch_size=1 so the 50-request task budget fits one Workers Free invocation.
 - [x] Add optional task idempotency and a 20-per-60-second single-owner intake cap.
 - [x] Persist stable task error codes for rate limits, budget exhaustion and queue failures.
 - [x] Add atomic queue claims, duplicate-delivery suppression and scheduled stale-task recovery.
