@@ -100,7 +100,7 @@ The current two-operation allowlist is safer and cheaper than a general-purpose 
 
 | Priority | Finding | Why it matters | Remediation |
 |---|---|---|---|
-| P0 | `personal-agent/README.md` API contract is stale | Users may send unsupported requests | Align README with the actual `operation` allowlist and clearly state that manual dispatch only records data |
+| P0 | `personal-agent/README.md` API contract was stale | Users could send unsupported requests | **Corrected on this branch** to match the actual `operation` allowlist and clearly label manual dispatch as record-only |
 | P0 | D1 database ID is a placeholder | Worker cannot be deployed with the committed config unchanged | Keep placeholder out of claims; document exact provisioning/configuration gate |
 | P1 | Tree fallback permits up to 1,000 tree-object reads | A large repository can consume excessive API requests | Introduce a single per-task GitHub request budget (initial target: 50 total requests) and stop with an explicit incomplete/error result before the budget is exceeded |
 | P1 | No visible task idempotency key | Client retries can create duplicate tasks | Add a client-supplied request key with a unique D1 constraint and deterministic duplicate response |
@@ -126,8 +126,8 @@ The 50-request ceiling is a proposed application-level budget, not a GitHub plat
 ## 8. Ordered continuation checklist
 
 ### Phase A — consistency and deployability
-- [ ] Correct `personal-agent/README.md` to match the actual API and record-only workflow.
-- [ ] Document the exact distinction between the Worker queue path and GitHub Actions manual task-record path.
+- [x] Correct `personal-agent/README.md` to match the actual API and record-only workflow.
+- [x] Document the exact distinction between the Worker queue path and GitHub Actions manual task-record path.
 - [ ] Add a configuration preflight that fails clearly when the D1 ID or required bindings are placeholders/missing.
 - [ ] Keep all secrets out of source, logs, PWA assets and artifacts.
 
