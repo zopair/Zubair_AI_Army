@@ -190,3 +190,17 @@ test("enforces a shared 50-request budget across recursive tree recovery", async
   );
   assert.equal(calls, 50);
 });
+
+test("prevents automatic redirects so the request budget matches external subrequests", async () => {
+  const optionsSeen = [];
+  const fetchImpl = async (url, options) => {
+    optionsSeen.push(options);
+    if (optionsSeen.length === 1) return response({ default_branch: "main" });
+    return response({ truncated: false, tree: [{ path: "README.md", type: "blob" }] });
+  };
+
+  await executeAllowlistedTask("repository_inventory", env, fetchImpl);
+
+  assert.equal(optionsSeen.length, 2);
+  assert.ok(optionsSeen.every((options) => options.redirect === "manual"));
+});
