@@ -31,6 +31,8 @@ class WorkerMigrationTests(unittest.TestCase):
             self.assertIn("idx_tasks_operation_created_at", indexes)
             self.assertIn("idx_tasks_idempotency_key", indexes)
             self.assertIn("idempotency_key", columns)
+            rate_limit_columns = {row[1] for row in connection.execute("PRAGMA table_info(api_rate_limits)").fetchall()}
+            self.assertTrue({"bucket", "window_started_at", "request_count"}.issubset(rate_limit_columns))
         finally:
             connection.close()
 

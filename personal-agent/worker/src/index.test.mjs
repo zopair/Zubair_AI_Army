@@ -7,39 +7,49 @@ class MockDB {
     this.row = row;
     this.rows = new Map(row ? [[row.id, row]] : []);
     this.calls = [];
+    this.rateLimitCount = 0;
+    this.rateLimitWindowStartedAt = null;
+    this.failRateLimit = false;
   }
 
   prepare(sql) {
     const db = this;
-    return {
-      bind(...values) {
-        return {
-          async run() {
-            db.calls.push({ sql, values });
-            if (/INSERT INTO tasks/.test(sql)) {
-              const [id, taskText, operation, idempotencyKey] = values;
-              if (idempotencyKey && [...db.rows.values()].some((item) => item.idempotency_key === idempotencyKey)) {
-                return { success: true, meta: { changes: 0 } };
-              }
-              db.rows.set(id, { id, task_text: taskText, operation, idempotency_key: idempotencyKey, status: "queued" });
-              return { success: true, meta: { changes: 1 } };
-            }
-            return { success: true, meta: { changes: 1 } };
-          },
-          async first() {
-            db.calls.push({ sql, values });
-            if (/idempotency_key\s*=\s*\?/.test(sql)) {
-              return [...db.rows.values()].find((item) => item.idempotency_key === values[0]) || null;
-            }
-            if (/WHERE id=\?/.test(sql)) return db.rows.get(values[0]) || db.row;
-            return db.row;
+    const statement = (values = []) => ({
+      async run() {
+        db.calls.push({ sql, values });
+        if (/INSERT INTO tasks/.test(sql)) {
+          const [id, taskText, operation, idempotencyKey] = values;
+          if (idempotencyKey && [...db.rows.values()].some((item) => item.idempotency_key === idempotencyKey)) {
+            return { success: true, meta: { changes: 0 } };
           }
-        };
+          db.rows.set(id, { id, task_text: taskText, operation, idempotency_key: idempotencyKey, status: "queued" });
+          return { success: true, meta: { changes: 1 } };
+        }
+        return { success: true, meta: { changes: 1 } };
+      },
+      async first() {
+        db.calls.push({ sql, values });
+        if (/INSERT INTO api_rate_limits/.test(sql)) {
+          if (db.failRateLimit) throw new Error("D1 unavailable");
+          if (db.rateLimitWindowStartedAt === null) db.rateLimitWindowStartedAt = Math.floor(Date.now() / 1000);
+          db.rateLimitCount = Math.min(db.rateLimitCount + 1, 21);
+          return { request_count: db.rateLimitCount, window_started_at: db.rateLimitWindowStartedAt };
+        }
+        if (sql.includes("idempotency_key=?")) {
+          return [...db.rows.values()].find((item) => item.idempotency_key === values[0]) || null;
+        }
+        if (sql.includes("WHERE id=?")) return db.rows.get(values[0]) || db.row;
+        return db.row;
+      }
+    });
+    return {
+      ...statement(),
+      bind(...values) {
+        return statement(values);
       }
     };
   }
 }
-
 function env(overrides = {}) {
   const bindings = {
     DB: new MockDB(),
@@ -91,7 +101,7 @@ test("task submission accepts only allowlisted operations and enqueues a typed m
   assert.equal(payload.status, "queued");
   assert.equal(bindings.lastMessage.operation, "repository_inventory");
   assert.equal(bindings.lastMessage.task_id, payload.task_id);
-  assert.match(bindings.DB.calls[0].sql, /INSERT INTO tasks/);
+  assert.ok(bindings.DB.calls.some((call) => /INSERT INTO tasks/.test(call.sql)));
 });
 
 test("task submission rejects malformed, oversized, and unsupported payloads", async () => {
@@ -236,5 +246,53 @@ test("rejects malformed idempotency keys before writing or enqueueing", async ()
 
   assert.equal(response.status, 400);
   assert.equal(bindings.DB.calls.length, 0);
+  assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 0);
+});
+
+test("task intake is capped at 20 accepted submissions per 60-second owner window", async () => {
+  const bindings = env();
+  const submit = () => worker.fetch(request("/api/tasks", {
+    method: "POST",
+    body: JSON.stringify({ operation: "repository_inventory" })
+  }), bindings);
+
+  const responses = [];
+  for (let i = 0; i < 21; i += 1) responses.push(await submit());
+
+  assert.equal(responses.slice(0, 20).every((response) => response.status === 202), true);
+  assert.equal(responses[20].status, 429);
+  const limitedPayload = await responses[20].json();
+  assert.equal(limitedPayload.error, "Task submission rate limit exceeded");
+  assert.equal(Number.isInteger(limitedPayload.retry_after_seconds), true);
+  assert.ok(limitedPayload.retry_after_seconds >= 1 && limitedPayload.retry_after_seconds <= 60);
+  assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 20);
+});
+
+test("idempotent replay returns existing task without consuming intake quota", async () => {
+  const bindings = env();
+  const options = {
+    method: "POST",
+    headers: { "idempotency-key": "stable-key-123" },
+    body: JSON.stringify({ operation: "repository_inventory" })
+  };
+  const first = await worker.fetch(request("/api/tasks", options), bindings);
+  const second = await worker.fetch(request("/api/tasks", options), bindings);
+
+  assert.equal(first.status, 202);
+  assert.equal(second.status, 200);
+  assert.equal(bindings.DB.rateLimitCount, 1);
+  assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 1);
+});
+
+test("task intake fails closed when the D1 rate limiter is unavailable", async () => {
+  const bindings = env();
+  bindings.DB.failRateLimit = true;
+  const response = await worker.fetch(request("/api/tasks", {
+    method: "POST",
+    body: JSON.stringify({ operation: "repository_inventory" })
+  }), bindings);
+
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { error: "Task intake limiter unavailable" });
   assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 0);
 });
