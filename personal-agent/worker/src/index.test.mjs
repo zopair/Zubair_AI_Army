@@ -7,6 +7,7 @@ class MockDB {
     this.row = row;
     this.rows = new Map(row ? [[row.id, row]] : []);
     this.calls = [];
+    this.rateLimitCount = 0;
   }
 
   prepare(sql) {
@@ -28,6 +29,10 @@ class MockDB {
           },
           async first() {
             db.calls.push({ sql, values });
+            if (/INSERT INTO api_rate_limits/.test(sql)) {
+              db.rateLimitCount = Math.min(db.rateLimitCount + 1, 21);
+              return { request_count: db.rateLimitCount };
+            }
             if (/idempotency_key\s*=\s*\?/.test(sql)) {
               return [...db.rows.values()].find((item) => item.idempotency_key === values[0]) || null;
             }
@@ -237,4 +242,39 @@ test("rejects malformed idempotency keys before writing or enqueueing", async ()
   assert.equal(response.status, 400);
   assert.equal(bindings.DB.calls.length, 0);
   assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 0);
+});
+
+test("task intake is capped at 20 accepted submissions per 60-second owner window", async () => {
+  const bindings = env();
+  const submit = () => worker.fetch(request("/api/tasks", {
+    method: "POST",
+    body: JSON.stringify({ operation: "repository_inventory" })
+  }), bindings);
+
+  const responses = [];
+  for (let i = 0; i < 21; i += 1) responses.push(await submit());
+
+  assert.equal(responses.slice(0, 20).every((response) => response.status === 202), true);
+  assert.equal(responses[20].status, 429);
+  assert.deepEqual(await responses[20].json(), {
+    error: "Task submission rate limit exceeded",
+    retry_after_seconds: 60
+  });
+  assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 20);
+});
+
+test("idempotent replay returns existing task without consuming intake quota", async () => {
+  const bindings = env();
+  const options = {
+    method: "POST",
+    headers: { "idempotency-key": "stable-key-123" },
+    body: JSON.stringify({ operation: "repository_inventory" })
+  };
+  const first = await worker.fetch(request("/api/tasks", options), bindings);
+  const second = await worker.fetch(request("/api/tasks", options), bindings);
+
+  assert.equal(first.status, 202);
+  assert.equal(second.status, 200);
+  assert.equal(bindings.DB.rateLimitCount, 1);
+  assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 1);
 });
