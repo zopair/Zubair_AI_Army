@@ -83,7 +83,7 @@ test("rejects unsupported operations without making external requests", async ()
   assert.equal(called, false);
 });
 
-test("stops on GitHub rate limiting without scheduling a blind retry", async () => {
+test("classifies GitHub rate limiting as a terminal task error", async () => {
   let call = 0;
   const fetchImpl = async () => {
     call += 1;
