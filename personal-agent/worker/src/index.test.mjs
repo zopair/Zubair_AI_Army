@@ -354,7 +354,7 @@ test("queue persists a stable error code when GitHub rate limits a task", async 
     globalThis.fetch = originalFetch;
   }
 
-  const update = bindings.DB.calls.find((call) => /UPDATE tasks/.test(call.sql));
+  const update = bindings.DB.calls.find((call) => call.sql.includes("SET status=?,"));
   assert.equal(acknowledged, true);
   assert.ok(update);
   assert.equal(update.values[0], "failed");
@@ -397,7 +397,7 @@ test("queue records request-budget exhaustion as a distinct terminal diagnostic"
     globalThis.fetch = originalFetch;
   }
 
-  const update = bindings.DB.calls.find((call) => /UPDATE tasks/.test(call.sql));
+  const update = bindings.DB.calls.find((call) => call.sql.includes("SET status=?,"));
   assert.equal(acknowledged, true);
   assert.ok(update);
   assert.equal(update.values[0], "failed");
