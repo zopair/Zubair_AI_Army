@@ -74,6 +74,13 @@ def validate_config(
     ):
         errors.append("TASK_QUEUE producer does not match a configured Queue consumer.")
 
+    triggers = config.get("triggers")
+    triggers = triggers if isinstance(triggers, dict) else {}
+    crons = triggers.get("crons")
+    crons = crons if isinstance(crons, list) else []
+    if "*/5 * * * *" not in crons:
+        errors.append("A five-minute Cron Trigger is required for stale task recovery.")
+
     variables = config.get("vars")
     variables = variables if isinstance(variables, dict) else {}
     for secret_name in sorted(SECRET_NAMES.intersection(variables)):
