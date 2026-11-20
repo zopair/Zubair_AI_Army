@@ -9,7 +9,8 @@ The project is being driven by one measurable MVP goal: **one real, independentl
 - Starter payment: **$0.25 USD-equivalent**
 - Included usage: **25 prepaid requests**
 - Payment destination: **Binance Pay UID `717654739`**
-- Payment mode: **receive-only**
+- Payment mode: **receive-only with manual operator confirmation**
+- Provider checkout/webhook integration: **not implemented**; no automatic Binance Pay verification is claimed
 - API endpoint: `/api/v1/normalize`
 - API access is issued only after an authorized operator independently verifies the payment.
 
@@ -39,6 +40,9 @@ Build a multi-product ecosystem where AI agents can discover, evaluate, use, ref
 - `revenue/` — referral and ledger logic
 - `zopair_army/` — swarm core, learning and benchmark components
 - `docs/` — operating and launch runbooks
+
+## Execution boundary
+The local task runner exposes only fixed operation IDs, with a timeout and output cap. It is not an isolated sandbox; only run trusted repository tasks until the Dagger/container execution boundary is implemented and verified.
 
 ## Security
 Secrets are environment-only. No API secret, private key or wallet seed phrase belongs in the repository. Financial actions remain approval-gated.
