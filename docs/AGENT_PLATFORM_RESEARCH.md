@@ -2,7 +2,7 @@
 
 **Snapshot date:** 2026-11-20  
 **Repository:** [zopair/Zubair_AI_Army](https://github.com/zopair/Zubair_AI_Army)  
-**Audited baseline:** `main` at `6755f4b75aa41387ac9904899493811ca6016993` (after merged PRs #22, #23, #24, #25 and #26)  
+**Audited baseline:** `main` at `cd68eccd992df38d9cd98633db1ed78687ebb746` (after merged PRs #22–#27)  
 **Scope:** the Personal AI Agent Engine and the repository automation that supports it. This document does not claim that the wider portfolio tracks are integrated.
 
 ## 1. Executive decision
@@ -78,6 +78,7 @@ The following implementation PRs are merged and verified by their associated CI 
 - [#24](https://github.com/zopair/Zubair_AI_Army/pull/24): strict Worker configuration preflight and configuration-template tests.
 - [#25](https://github.com/zopair/Zubair_AI_Army/pull/25): read-only capability registry and stable task error codes.
 - [#26](https://github.com/zopair/Zubair_AI_Army/pull/26): atomic queue claims, duplicate-delivery suppression and scheduled stale-task recovery.
+- [#27](https://github.com/zopair/Zubair_AI_Army/pull/27): one-message Queue invocations, redirect control and free-tier subrequest alignment.
 
 Do not redo these changes. Extend them.
 
@@ -116,7 +117,7 @@ The existing two-operation allowlist is safer and cheaper than a general-purpose
 - Recovery therefore uses at most 21 D1 queries per scheduled invocation: one scan plus 20 conditional updates. This stays below the documented Workers Free D1 limit of 50 queries per invocation.
 - Keep model calls, extra packages, Docker, external databases and paid services out of the baseline.
 
-Cloudflare Free limits relevant to this design: 50 external subrequests per Worker invocation, 50 D1 queries per Worker invocation, 100,000 Worker requests/day and five Cron Triggers per account. The current design uses one Cron Trigger. The 50-request GitHub budget is an application guard aligned with the platform ceiling, not a GitHub quota.
+Cloudflare Free limits relevant to this design: 50 external subrequests per Worker invocation, 50 D1 queries per Worker invocation, 100,000 Worker requests/day and five Cron Triggers per account. The current design uses one Cron Trigger and one queue message per invocation. The 50-request GitHub budget is an application guard aligned with the platform ceiling, not a GitHub quota.
 
 ## 8. Ordered continuation checklist
 
@@ -142,7 +143,7 @@ Cloudflare Free limits relevant to this design: 50 external subrequests per Work
 - [ ] Add model inference only after a measurable need exists and a free/local execution path is validated.
 
 ### Phase D — evidence and release readiness
-- [x] Run focused Worker tests, SQLite migrations, repository preflight and full CI for PRs #22–#26.
+- [x] Run focused Worker tests, SQLite migrations, repository preflight and full CI for PRs #22–#27.
 - [x] Reconcile the Personal Agent API documentation and implementation.
 - [ ] Verify live D1, Queue and Cron behavior after deliberate resource provisioning.
 - [ ] Reassess limits using observed usage rather than increasing budgets speculatively.

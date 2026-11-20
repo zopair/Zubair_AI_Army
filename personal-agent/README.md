@@ -14,7 +14,8 @@ A private, single-owner task-processing prototype inside `zopair/Zubair_AI_Army`
   - `repository_inventory`
   - `repository_documentation_audit`
 - Both operations read GitHub repository metadata and Git tree data. They do not read file contents, execute shell commands, modify repositories, or invoke an LLM.
-- GitHub API calls have a 10-second timeout, disable automatic redirects, and classify rate limits, server failures, and network failures for bounded queue retry. The shared 50-request ceiling therefore also stays within the Workers Free external-subrequest cap.\n- Stale recovery scans at most 20 tasks per scheduled invocation (one D1 read plus at most 20 conditional updates), below the D1 Free per-invocation query ceiling.
+- GitHub API calls have a 10-second timeout, disable automatic redirects, and treat rate limits as terminal, and retry only transient server/network failures within the configured queue-attempt limit. The shared 50-request ceiling therefore also stays within the Workers Free external-subrequest cap.
+- Stale recovery scans at most 20 tasks per scheduled invocation (one D1 read plus at most 20 conditional updates), below the D1 Free per-invocation query ceiling.
 
 Both registered capabilities are read-only and require no approval because they do not modify external state. Unknown operations are rejected. Any future write-capable capability must introduce an explicit approval path before it can be registered. Do not expand the registry to arbitrary shell, Python, or model-generated code.
 
@@ -61,7 +62,7 @@ A new successful submission returns HTTP `202` with `task_id`, `operation`, and 
 GET /api/tasks/<uuid>
 ```
 
-Returns the persisted task fields, including status, result, error and a stable `error_code` where present. Queue tasks use a 20-minute stale threshold and are scanned every five minutes (UTC); recovery is bounded to 20 tasks per scheduled invocation. Queue tasks use a 20-minute stale threshold and are scanned every five minutes (UTC); recovery is bounded to 20 tasks per scheduled invocation. Terminal diagnostics currently distinguish `GITHUB_RATE_LIMITED`, `GITHUB_REQUEST_BUDGET_EXCEEDED`, `TRANSIENT_GITHUB_FAILURE`, `QUEUE_UNAVAILABLE`, and generic `TASK_EXECUTION_FAILED` outcomes. Clients should branch on `error_code`, not parse the human-readable `error` message.
+Returns the persisted task fields, including status, result, error and a stable `error_code` where present. Queue tasks use a 20-minute stale threshold and are scanned every five minutes (UTC); recovery is bounded to 20 tasks per scheduled invocation. Terminal diagnostics currently distinguish `GITHUB_RATE_LIMITED`, `GITHUB_REQUEST_BUDGET_EXCEEDED`, `TRANSIENT_GITHUB_FAILURE`, `QUEUE_UNAVAILABLE`, and generic `TASK_EXECUTION_FAILED` outcomes. Clients should branch on `error_code`, not parse the human-readable `error` message.
 
 ## Separate GitHub Actions workflow
 
