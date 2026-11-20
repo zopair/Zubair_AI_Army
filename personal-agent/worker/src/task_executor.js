@@ -1,7 +1,9 @@
-export const ALLOWED_OPERATIONS = Object.freeze([
-  "repository_inventory",
-  "repository_documentation_audit"
-]);
+export const CAPABILITY_REGISTRY = Object.freeze({
+  repository_inventory: Object.freeze({ access: "read", requiresApproval: false, execute: repositoryInventory }),
+  repository_documentation_audit: Object.freeze({ access: "read", requiresApproval: false, execute: documentationAudit })
+});
+
+export const ALLOWED_OPERATIONS = Object.freeze(Object.keys(CAPABILITY_REGISTRY));
 
 export class RetryableTaskError extends Error {
   constructor(message = "Temporary GitHub API failure") {
@@ -256,11 +258,9 @@ function documentationAudit(snapshot) {
 }
 
 export async function executeAllowlistedTask(operation, env, fetchImpl = fetch) {
-  if (!ALLOWED_OPERATIONS.includes(operation)) {
-    throw new Error("Unsupported task operation");
-  }
+  const capability = CAPABILITY_REGISTRY[operation];
+  if (!capability) throw new Error("Unsupported task operation");
 
   const snapshot = await loadRepositoryTree(env, fetchImpl);
-  if (operation === "repository_inventory") return repositoryInventory(snapshot);
-  return documentationAudit(snapshot);
+  return capability.execute(snapshot);
 }
