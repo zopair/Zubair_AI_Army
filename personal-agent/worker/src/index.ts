@@ -71,8 +71,42 @@ export default {
         return json({ error: "Invalid Idempotency-Key header" }, 400);
       }
 
-      const id = crypto.randomUUID();
       const operation = body.operation;
+
+      if (idempotencyKey !== null) {
+        const existing = await env.DB.prepare(
+          "SELECT id, operation, status FROM tasks WHERE idempotency_key=?"
+        ).bind(idempotencyKey).first();
+
+        if (existing) {
+          if (existing.operation !== operation) {
+            return json({ error: "Idempotency key already used for another operation" }, 409);
+          }
+          return json({
+            task_id: existing.id,
+            operation: existing.operation,
+            status: existing.status
+          }, 200);
+        }
+      }
+
+      let rateLimit;
+      try {
+        rateLimit = await env.DB.prepare(
+          "INSERT INTO api_rate_limits (bucket, window_started_at, request_count) VALUES ('task_submission', unixepoch(), 1) ON CONFLICT(bucket) DO UPDATE SET request_count = CASE WHEN api_rate_limits.window_started_at <= unixepoch() - 60 THEN 1 ELSE MIN(api_rate_limits.request_count + 1, 21) END, window_started_at = CASE WHEN api_rate_limits.window_started_at <= unixepoch() - 60 THEN unixepoch() ELSE api_rate_limits.window_started_at END RETURNING request_count"
+        ).first();
+      } catch {
+        return json({ error: "Task intake limiter unavailable" }, 503);
+      }
+
+      if (!rateLimit || rateLimit.request_count > 20) {
+        return json({
+          error: "Task submission rate limit exceeded",
+          retry_after_seconds: 60
+        }, 429);
+      }
+
+      const id = crypto.randomUUID();
       const insert = await env.DB.prepare(
         "INSERT INTO tasks (id, task_text, operation, idempotency_key, status) VALUES (?, ?, ?, ?, 'queued') ON CONFLICT(idempotency_key) DO NOTHING"
       ).bind(id, operation, operation, idempotencyKey).run();
