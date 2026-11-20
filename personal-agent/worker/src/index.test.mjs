@@ -12,39 +12,40 @@ class MockDB {
 
   prepare(sql) {
     const db = this;
-    return {
-      bind(...values) {
-        return {
-          async run() {
-            db.calls.push({ sql, values });
-            if (/INSERT INTO tasks/.test(sql)) {
-              const [id, taskText, operation, idempotencyKey] = values;
-              if (idempotencyKey && [...db.rows.values()].some((item) => item.idempotency_key === idempotencyKey)) {
-                return { success: true, meta: { changes: 0 } };
-              }
-              db.rows.set(id, { id, task_text: taskText, operation, idempotency_key: idempotencyKey, status: "queued" });
-              return { success: true, meta: { changes: 1 } };
-            }
-            return { success: true, meta: { changes: 1 } };
-          },
-          async first() {
-            db.calls.push({ sql, values });
-            if (/INSERT INTO api_rate_limits/.test(sql)) {
-              db.rateLimitCount = Math.min(db.rateLimitCount + 1, 21);
-              return { request_count: db.rateLimitCount };
-            }
-            if (/idempotency_key\s*=\s*\?/.test(sql)) {
-              return [...db.rows.values()].find((item) => item.idempotency_key === values[0]) || null;
-            }
-            if (/WHERE id=\?/.test(sql)) return db.rows.get(values[0]) || db.row;
-            return db.row;
+    const statement = (values = []) => ({
+      async run() {
+        db.calls.push({ sql, values });
+        if (/INSERT INTO tasks/.test(sql)) {
+          const [id, taskText, operation, idempotencyKey] = values;
+          if (idempotencyKey && [...db.rows.values()].some((item) => item.idempotency_key === idempotencyKey)) {
+            return { success: true, meta: { changes: 0 } };
           }
-        };
+          db.rows.set(id, { id, task_text: taskText, operation, idempotency_key: idempotencyKey, status: "queued" });
+          return { success: true, meta: { changes: 1 } };
+        }
+        return { success: true, meta: { changes: 1 } };
+      },
+      async first() {
+        db.calls.push({ sql, values });
+        if (/INSERT INTO api_rate_limits/.test(sql)) {
+          db.rateLimitCount = Math.min(db.rateLimitCount + 1, 21);
+          return { request_count: db.rateLimitCount };
+        }
+        if (/idempotency_key\\s*=\\s*\\?/.test(sql)) {
+          return [...db.rows.values()].find((item) => item.idempotency_key === values[0]) || null;
+        }
+        if (/WHERE id=\\?/.test(sql)) return db.rows.get(values[0]) || db.row;
+        return db.row;
+      }
+    });
+    return {
+      ...statement(),
+      bind(...values) {
+        return statement(values);
       }
     };
   }
 }
-
 function env(overrides = {}) {
   const bindings = {
     DB: new MockDB(),
