@@ -122,7 +122,7 @@ The tests cover bearer-token matching, allowlist enforcement, GitHub API request
 | Supported operations | Repository inventory and documentation/CI evidence audit; read-only |
 | Result lifecycle | Results, terminal status and stable error codes persisted in D1 and returned by task lookup |
 | Arbitrary shell / write operations | Explicitly unsupported |
-| LLM execution | Not connected to a deployed inference endpoint; provider router exists separately |
+| LLM execution | Not connected to a deployed inference endpoint |
 | Rate limiting and abuse protection | D1-backed 20-new-task / 60-second global single-owner cap; no per-IP or tenant throttling |
 | Enterprise identity / tenant isolation | Not implemented |
 | Product tracks V1–V4 | Mixed maturity; require separate audits and acceptance criteria |
