@@ -1,23 +1,24 @@
-import assert from 'node:assert/strict';
-import test from 'node:test';
+import { describe, expect, it } from 'vitest';
 import { validateTask } from './task-contract.mjs';
 
-test('accepts a registered operation and strips executable fields', () => {
-  const task = validateTask({
-    id: 'repo-check',
-    operation: 'node_version',
-    command: 'bash',
-    args: ['-lc', 'unsafe'],
-    cwd: '/tmp'
+describe('typed task contract', () => {
+  it('accepts a registered operation and strips executable fields', () => {
+    const task = validateTask({
+      id: 'repo-check',
+      operation: 'node_version',
+      command: 'bash',
+      args: ['-lc', 'unsafe'],
+      cwd: '/tmp'
+    });
+    expect(task).toEqual({ id: 'repo-check', operation: 'node_version' });
   });
-  assert.deepEqual(task, { id: 'repo-check', operation: 'node_version' });
-});
 
-test('rejects missing or unregistered operations', () => {
-  assert.throws(() => validateTask({ id: 'x' }), /operation is required/);
-  assert.throws(() => validateTask({ id: 'x', operation: 'arbitrary-shell' }), /operation not allowed/);
-});
+  it('rejects missing or unregistered operations', () => {
+    expect(() => validateTask({ id: 'x' })).toThrow(/operation is required/);
+    expect(() => validateTask({ id: 'x', operation: 'arbitrary-shell' })).toThrow(/operation not allowed/);
+  });
 
-test('rejects malformed task identifiers', () => {
-  assert.throws(() => validateTask({ id: '../escape', operation: 'node_version' }), /invalid task id/);
+  it('rejects malformed task identifiers', () => {
+    expect(() => validateTask({ id: '../escape', operation: 'node_version' })).toThrow(/invalid task id/);
+  });
 });
