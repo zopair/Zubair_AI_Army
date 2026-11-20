@@ -11,8 +11,8 @@ import {
 
 describe('normalize service validation', () => {
   it('accepts only a strict bearer authorization header', () => {
-    expect(extractBearerToken('Bearer api-key-123')).toBe('api-key-123');
-    expect(extractBearerToken('api-key-123')).toBe('');
+    expect(extractBearerToken('Bearer api-key-123456789')).toBe('api-key-123456789');
+    expect(extractBearerToken('api-key-123456789')).toBe('');
     expect(extractBearerToken('Bearer two words')).toBe('');
     expect(extractBearerToken(null)).toBe('');
   });
