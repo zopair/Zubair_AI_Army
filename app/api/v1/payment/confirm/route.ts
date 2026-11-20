@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
+import { paymentConfirmSecretMatches } from './payment-auth.mjs';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
@@ -12,7 +13,7 @@ function hash(value: string) {
 export async function POST(req: Request) {
   const configuredSecret = process.env.PAYMENT_CONFIRM_SECRET;
   const suppliedSecret = req.headers.get('x-payment-confirm-secret') ?? '';
-  if (!configuredSecret || suppliedSecret !== configuredSecret) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  if (!paymentConfirmSecretMatches(configuredSecret, suppliedSecret)) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
 
   try {
     const body = await req.json();
