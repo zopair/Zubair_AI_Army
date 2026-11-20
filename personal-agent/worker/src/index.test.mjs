@@ -31,10 +31,10 @@ class MockDB {
           db.rateLimitCount = Math.min(db.rateLimitCount + 1, 21);
           return { request_count: db.rateLimitCount };
         }
-        if (/idempotency_key\\s*=\\s*\\?/.test(sql)) {
+        if (sql.includes("idempotency_key=?")) {
           return [...db.rows.values()].find((item) => item.idempotency_key === values[0]) || null;
         }
-        if (/WHERE id=\\?/.test(sql)) return db.rows.get(values[0]) || db.row;
+        if (sql.includes("WHERE id=?")) return db.rows.get(values[0]) || db.row;
         return db.row;
       }
     });
