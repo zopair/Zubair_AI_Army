@@ -2,7 +2,7 @@
 
 **Snapshot date:** 2026-11-20  
 **Repository:** [zopair/Zubair_AI_Army](https://github.com/zopair/Zubair_AI_Army)  
-**Audited baseline:** `main` at `1452e2600125c9fc255d083809ea7de346d3275d` (after merged PRs #22 and #23)  
+**Audited baseline:** `main` at `6755f4b75aa41387ac9904899493811ca6016993` (after merged PRs #22, #23, #24, #25 and #26)  
 **Scope:** the Personal AI Agent Engine and the repository automation that supports it. This document does not claim that the wider portfolio tracks are integrated.
 
 ## 1. Executive decision
@@ -32,7 +32,7 @@ The earlier recursive Git tree audit returned 129 entries with `truncated=false`
 | Worker API | `personal-agent/worker/src/index.ts` | Authenticated task intake, D1 persistence, queue dispatch, task lookup |
 | Authentication | `personal-agent/worker/src/auth.js` | Bearer-token comparison without early character mismatch return |
 | Task executor | `personal-agent/worker/src/task_executor.js` | Fixed allowlist, GitHub metadata/tree reads, inventory and documentation audit |
-| Database | `personal-agent/worker/migrations/0001_init.sql` through `0004_add_api_rate_limits.sql` | Task table and operation index |
+| Database | `personal-agent/worker/migrations/0001_init.sql` through `0005_add_task_error_code.sql` | Task table and operation index |
 | Tests | `personal-agent/worker/src/*.test.mjs`, `personal-agent/worker/tests/test_migrations.py` | Worker routes, authentication, executor and SQLite migration checks |
 | Worker config | `personal-agent/worker/wrangler.toml` | Worker, D1 and Queue bindings |
 | GitHub automation | `.github/workflows/personal-agent.yml` | Manual dispatch that stores task text as an artifact; it does not execute the task |
@@ -49,7 +49,7 @@ The earlier recursive Git tree audit returned 129 entries with `truncated=false`
 3. Queue execution stores completed/failed state and acknowledges or retries messages.
 4. GitHub API calls use GET requests, a 10-second timeout, and classify rate limits/5xx/network failures as retryable.
 5. Repository parsing validates the configured `owner/repository` form.
-6. Recursive Git tree truncation triggers non-recursive traversal with a shared 50-request budget across metadata and tree calls.\n7. Optional D1-backed idempotency keys prevent ordinary client retries from enqueueing duplicate tasks.\n8. New valid task submissions are capped at 20 per fixed 60-second single-owner window using one atomic D1 upsert; the limiter fails closed if D1 is unavailable.
+6. Recursive Git tree truncation triggers non-recursive traversal with a shared 50-request budget across metadata and tree calls.\n7. Optional D1-backed idempotency keys prevent ordinary client retries from enqueueing duplicate tasks.\n8. New valid task submissions are capped at 20 per fixed 60-second single-owner window using one atomic D1 upsert; the limiter fails closed if D1 is unavailable.\n9. Task execution uses an atomic D1 claim and a five-minute Cron Trigger to recover queued/dispatched work stale for 20 minutes, with at most 20 tasks per recovery run.\n10. Task status exposes stable error codes; a read-only capability registry defines the only operations.\n11. Strict deployment preflight validates Wrangler wiring and blocks the D1 placeholder.
 7. Tests cover authentication, task input validation, the two operations, rate-limit classification, migration structure and truncated-tree recovery.
 8. CI workflows use read-only repository permissions and pin the visible third-party Actions to commit SHAs.
 
@@ -73,7 +73,7 @@ PR [#21](https://github.com/zopair/Zubair_AI_Army/pull/21) is **merged**. It add
 Recent merged work includes:
 - [#18](https://github.com/zopair/Zubair_AI_Army/pull/18): worker authentication and regression tests;
 - [#19](https://github.com/zopair/Zubair_AI_Army/pull/19): real PR validation for worker and V4;
-- [#20](https://github.com/zopair/Zubair_AI_Army/pull/20): commercial MVP validation gate.\n- [#22](https://github.com/zopair/Zubair_AI_Army/pull/22): 50-request budget, rate-limit stop behavior, and API/documentation alignment.\n- [#23](https://github.com/zopair/Zubair_AI_Army/pull/23): idempotent task intake and D1-backed 20-per-60-second submission cap.\n- [#24](https://github.com/zopair/Zubair_AI_Army/pull/24): strict Worker configuration preflight (open; awaiting CI).
+- [#20](https://github.com/zopair/Zubair_AI_Army/pull/20): commercial MVP validation gate.\n- [#22](https://github.com/zopair/Zubair_AI_Army/pull/22): 50-request budget, rate-limit stop behavior, and API/documentation alignment.\n- [#23](https://github.com/zopair/Zubair_AI_Army/pull/23): idempotent task intake and D1-backed 20-per-60-second submission cap.\n- [#24](https://github.com/zopair/Zubair_AI_Army/pull/24): strict Worker configuration preflight.\n- [#25](https://github.com/zopair/Zubair_AI_Army/pull/25): read-only capability registry and stable task error codes.\n- [#26](https://github.com/zopair/Zubair_AI_Army/pull/26): atomic queue claims and scheduled stale-task recovery.
 
 Do not redo these changes. Extend them.
 
@@ -103,7 +103,7 @@ The current two-operation allowlist is safer and cheaper than a general-purpose 
 | P0 | `personal-agent/README.md` API contract was stale | Users could send unsupported requests | **Corrected on this branch** to match the actual `operation` allowlist and clearly label manual dispatch as record-only |
 | P0 | D1 database ID is a placeholder | Worker cannot be deployed with the committed config unchanged | Keep placeholder out of claims; document exact provisioning/configuration gate |
 | P1 | Tree fallback previously permitted up to 1,000 tree-object reads | A large repository could consume excessive API requests | **Implemented on this branch:** one 50-request budget is shared across metadata, recursive-tree and fallback-tree calls; budget exhaustion fails before request 51 |
-| P1 | Queue delivery has no durable execution claim/lease | Duplicate deliveries can repeat repository reads and consume API budget | Add a minimal, tested claim/recovery protocol before introducing model execution |
+| P1 | Queue retries can exhaust before a DLQ exists | Terminal task failures are visible in D1, but raw queue payloads are not retained separately | Measure actual failure frequency before adding a DLQ; stale queued/dispatched tasks are now recovered by Cron |
 | P1 | No per-IP or tenant-level throttling | The current single-owner cap does not isolate future users | Keep the current single-owner cap; add identity-scoped limits only when multi-user auth is designed |
 | P1 | Documentation claims can overstate execution | A task-record workflow is not an autonomous executor | Label each workflow as record-only or executable and report verified capabilities only |
 | P2 | No configured dead-letter queue | Poison messages may be discarded after retries | Decide whether a DLQ is needed after measuring failure frequency; avoid extra resources until then |
@@ -116,7 +116,7 @@ Initial limits for the next implementation phase:
 - Maximum **50 GitHub API requests per task**, inclusive of metadata, tree traversal and any follow-up calls.
 - Stop at the first rate-limit response; do not retry a rate-limited request repeatedly.
 - Maximum **3 delivery attempts** for transient queue failures, consistent with the current queue configuration.
-- Maximum **10 seconds per GitHub request**, preserving the existing timeout.\n- Maximum **20 new valid task submissions per fixed 60-second window** for the current single-owner API; idempotent replays normally do not consume another slot.
+- Maximum **10 seconds per GitHub request**, preserving the existing timeout.\n- Maximum **20 new valid task submissions per fixed 60-second window** for the current single-owner API; idempotent replays normally do not consume another slot.\n- Keep each queue execution to at most 50 GitHub external requests and do not follow redirects automatically.\n- Cron recovery reads at most 20 stale tasks and performs no more than 21 D1 queries per invocation (one scan plus 20 conditional updates).
 - No model calls, package additions, Docker images, external databases, or paid services in the baseline phase.
 - Do not add dependency caching to the dependency-free worker tests; cache only a measured, repeatable dependency-install step.
 - Use short-retention artifacts for temporary outputs and never store secrets in artifacts or task payloads.
@@ -135,7 +135,7 @@ The 50-request ceiling is a proposed application-level budget, not a GitHub plat
 - [x] Replace the 1,000-tree-object-only guard with a shared 50-request task budget.
 - [x] Add tests for budget exhaustion and rate-limit stop behavior. The budget test asserts exactly 50 outbound calls.
 - [ ] Add an explicit task result/diagnostic contract for budget exhaustion so callers can distinguish an intentionally stopped inventory from other failures.
-- [x] Add optional D1-backed idempotency to task intake (PR #22).\n- [ ] Add a durable idempotent queue execution claim/recovery protocol.
+- [x] Add optional D1-backed idempotency to task intake (PR #22).\n- [x] Add a durable idempotent queue claim and scheduled stale-task recovery protocol (PR #26).
 - [ ] Verify queue retry/ack behavior against Cloudflare's documented semantics.
 
 ### Phase C — useful agent foundation
