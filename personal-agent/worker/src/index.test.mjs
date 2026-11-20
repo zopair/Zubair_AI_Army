@@ -261,10 +261,10 @@ test("task intake is capped at 20 accepted submissions per 60-second owner windo
 
   assert.equal(responses.slice(0, 20).every((response) => response.status === 202), true);
   assert.equal(responses[20].status, 429);
-  assert.deepEqual(await responses[20].json(), {
-    error: "Task submission rate limit exceeded",
-    retry_after_seconds: assert.any(Number)
-  });
+  const limitedPayload = await responses[20].json();
+  assert.equal(limitedPayload.error, "Task submission rate limit exceeded");
+  assert.equal(Number.isInteger(limitedPayload.retry_after_seconds), true);
+  assert.ok(limitedPayload.retry_after_seconds >= 1 && limitedPayload.retry_after_seconds <= 60);
   assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 20);
 });
 
