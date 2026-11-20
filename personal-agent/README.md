@@ -98,7 +98,7 @@ The Node tests cover authentication, route validation, queue lifecycle and the a
 - No model inference provider is connected.
 - No autonomous tool discovery or multi-agent orchestration exists.
 - No API-level rate limiter, tenant isolation or idempotency key is implemented.
-- The recursive-tree fallback currently allows up to 1,000 tree-object reads; a shared per-task API request budget is a required next improvement.
+- The recursive-tree fallback now shares a 50-request ceiling across metadata, recursive-tree and fallback-tree calls. Rate-limit responses stop the task without a blind queue retry.
 - The Worker configuration contains a D1 ID placeholder until deployment is deliberately configured.
 - The root repository has no explicit `LICENSE` file on the audited default branch.
 
