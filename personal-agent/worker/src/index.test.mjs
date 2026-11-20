@@ -48,8 +48,9 @@ function env(overrides = {}) {
     GITHUB_REPOSITORY: "zopair/Zubair_AI_Army",
     ...overrides
   };
+  bindings.TASK_QUEUE_MESSAGES = [];
   bindings.TASK_QUEUE = {
-    send: async (message) => { bindings.lastMessage = message; }
+    send: async (message) => { bindings.lastMessage = message; bindings.TASK_QUEUE_MESSAGES.push(message); }
   };
   return bindings;
 }
