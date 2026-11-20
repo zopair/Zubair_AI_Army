@@ -60,7 +60,7 @@ A new successful submission returns HTTP `202` with `task_id`, `operation`, and 
 GET /api/tasks/<uuid>
 ```
 
-Returns the persisted task fields, including status, result, error and a stable `error_code` where present. Terminal diagnostics currently distinguish `GITHUB_RATE_LIMITED`, `GITHUB_REQUEST_BUDGET_EXCEEDED`, `TRANSIENT_GITHUB_FAILURE`, `QUEUE_UNAVAILABLE`, and generic `TASK_EXECUTION_FAILED` outcomes. Clients should branch on `error_code`, not parse the human-readable `error` message.
+Returns the persisted task fields, including status, result, error and a stable `error_code` where present. Queue tasks use a 20-minute stale threshold and are scanned every five minutes (UTC); recovery is bounded to 20 tasks per scheduled invocation. Terminal diagnostics currently distinguish `GITHUB_RATE_LIMITED`, `GITHUB_REQUEST_BUDGET_EXCEEDED`, `TRANSIENT_GITHUB_FAILURE`, `QUEUE_UNAVAILABLE`, and generic `TASK_EXECUTION_FAILED` outcomes. Clients should branch on `error_code`, not parse the human-readable `error` message.
 
 ## Separate GitHub Actions workflow
 
@@ -76,7 +76,7 @@ The Worker configuration is in `worker/wrangler.toml`. Run the strict deployment
 python scripts/ci/preflight_worker_config.py
 ```
 
-The checked-in template intentionally fails strict mode while the D1 ID is a placeholder. CI runs `python scripts/ci/preflight_worker_config.py --allow-placeholders` to validate structure only; that mode is not deployment approval. Before any deployment:
+The checked-in template intentionally fails strict mode while the D1 ID is a placeholder. CI runs `python scripts/ci/preflight_worker_config.py --allow-placeholders` to validate structure, Queue wiring and the required five-minute recovery cron only; that mode is not deployment approval. Before any deployment:
 
 1. Create and bind the required D1 database and Queue.
 2. Replace the `REPLACE_WITH_D1_DATABASE_ID` placeholder with the actual D1 database ID; strict preflight also validates its UUID format and the configured migration directory.
