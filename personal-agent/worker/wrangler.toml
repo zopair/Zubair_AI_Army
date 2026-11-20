@@ -19,3 +19,6 @@ max_retries = 3
 
 [vars]
 GITHUB_REPOSITORY = "zopair/Zubair_AI_Army"
+
+[triggers]
+crons = ["*/5 * * * *"]
