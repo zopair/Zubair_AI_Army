@@ -55,7 +55,7 @@ The earlier recursive Git tree audit returned 129 entries with `truncated=false`
 9. Task status exposes stable error codes for rate limiting, request-budget exhaustion, transient GitHub failures, queue unavailability and generic failures.
 10. A small capability registry exposes only read-only handlers. Any future write capability must have an explicit approval path before registration.
 11. A strict, dependency-free Wrangler preflight validates the entrypoint, D1 binding/UUID/migration directory, Queue wiring and batch size, repository reference, secret placement and required Cron Trigger. Strict mode blocks while the D1 ID is a placeholder.
-12. CI covers Worker routes, executor behavior, all five SQL migrations, configuration template validation, repository preflight and the V4 application build.\n13. Queue max_batch_size is fixed at 1, so each 50-request task receives a separate Workers invocation; automatic redirects are disabled to prevent hidden subrequests.
+12. CI covers Worker routes, executor behavior, all five SQL migrations, configuration template validation, repository preflight and the V4 application build.
 
 ### Not implemented / not proven
 
@@ -77,7 +77,8 @@ The following implementation PRs are merged and verified by their associated CI 
 - [#23](https://github.com/zopair/Zubair_AI_Army/pull/23): optional task idempotency and D1-backed 20-per-60-second intake cap.
 - [#24](https://github.com/zopair/Zubair_AI_Army/pull/24): strict Worker configuration preflight and configuration-template tests.
 - [#25](https://github.com/zopair/Zubair_AI_Army/pull/25): read-only capability registry and stable task error codes.
-- [#26](https://github.com/zopair/Zubair_AI_Army/pull/26): atomic queue claims, duplicate-delivery suppression and scheduled stale-task recovery.\n- [#27](https://github.com/zopair/Zubair_AI_Army/pull/27): one-message Queue invocations, redirect control and free-tier subrequest alignment.
+- [#26](https://github.com/zopair/Zubair_AI_Army/pull/26): atomic queue claims, duplicate-delivery suppression and scheduled stale-task recovery.
+- [#27](https://github.com/zopair/Zubair_AI_Army/pull/27): one-message Queue invocations, redirect control and free-tier subrequest alignment.
 
 Do not redo these changes. Extend them.
 
