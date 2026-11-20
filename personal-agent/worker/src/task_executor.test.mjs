@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import {
   ALLOWED_OPERATIONS,
   executeAllowlistedTask,
-  RetryableTaskError,
   RateLimitExceededError,
   RequestBudgetExceededError
 } from "./task_executor.js";
