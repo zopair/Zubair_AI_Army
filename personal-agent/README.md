@@ -7,8 +7,9 @@ A private, single-owner task-processing prototype inside `zopair/Zubair_AI_Army`
 ## Implemented Worker path
 
 - Cloudflare Worker exposes a small authenticated task API.
-- D1 stores task status and results.
-- Cloudflare Queue dispatches allowlisted work.
+- D1 stores task status, results, stable error codes, and idempotency state.
+- Cloudflare Queue dispatches allowlisted work with an atomic `queued` → `dispatched` claim; duplicate deliveries for already claimed or terminal tasks are acknowledged without repeating repository reads.
+- A five-minute Cron Trigger recovers queued/dispatched tasks older than 20 minutes, covering lost deliveries and worker interruptions.
 - The executor uses a small explicit capability registry and currently supports only:
   - `repository_inventory`
   - `repository_documentation_audit`
@@ -60,7 +61,7 @@ A new successful submission returns HTTP `202` with `task_id`, `operation`, and 
 GET /api/tasks/<uuid>
 ```
 
-Returns the persisted task fields, including status, result, error and a stable `error_code` where present. Queue tasks use a 20-minute stale threshold and are scanned every five minutes (UTC); recovery is bounded to 20 tasks per scheduled invocation. Terminal diagnostics currently distinguish `GITHUB_RATE_LIMITED`, `GITHUB_REQUEST_BUDGET_EXCEEDED`, `TRANSIENT_GITHUB_FAILURE`, `QUEUE_UNAVAILABLE`, and generic `TASK_EXECUTION_FAILED` outcomes. Clients should branch on `error_code`, not parse the human-readable `error` message.
+Returns the persisted task fields, including status, result, error and a stable `error_code` where present. Queue tasks use a 20-minute stale threshold and are scanned every five minutes (UTC); recovery is bounded to 20 tasks per scheduled invocation. Queue tasks use a 20-minute stale threshold and are scanned every five minutes (UTC); recovery is bounded to 20 tasks per scheduled invocation. Terminal diagnostics currently distinguish `GITHUB_RATE_LIMITED`, `GITHUB_REQUEST_BUDGET_EXCEEDED`, `TRANSIENT_GITHUB_FAILURE`, `QUEUE_UNAVAILABLE`, and generic `TASK_EXECUTION_FAILED` outcomes. Clients should branch on `error_code`, not parse the human-readable `error` message.
 
 ## Separate GitHub Actions workflow
 
