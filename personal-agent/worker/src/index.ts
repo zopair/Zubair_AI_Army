@@ -1,3 +1,5 @@
+import { constantTimeBearerTokenMatches } from "./auth.js";
+
 export interface Env {
   DB: D1Database;
   TASK_QUEUE: Queue<{ task_id: string; task_text: string }>;
@@ -13,22 +15,22 @@ function json(data: unknown, status = 200): Response {
 }
 
 function authorized(request: Request, env: Env): boolean {
-  const supplied = request.headers.get("authorization") || "";
-  const expected = `Bearer ${env.API_TOKEN}`;
-  return supplied.length === expected.length && crypto.subtle.timingSafeEqual
-    ? crypto.subtle.timingSafeEqual(new TextEncoder().encode(supplied), new TextEncoder().encode(expected))
-    : supplied === expected;
+  return constantTimeBearerTokenMatches(request.headers.get("authorization"), env.API_TOKEN);
 }
 
 async function dispatchToGitHub(env: Env, task: TaskMessage): Promise<void> {
-  const [owner, repo] = env.GITHUB_REPOSITORY.split("/");
-  if (!owner || !repo) throw new Error("Invalid GITHUB_REPOSITORY configuration");
+  const [owner, repo, ...extra] = env.GITHUB_REPOSITORY.split("/");
+  if (!owner || !repo || extra.length > 0 || !env.GITHUB_TOKEN) {
+    throw new Error("Invalid GitHub dispatch configuration");
+  }
   const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/personal-agent.yml/dispatches`, {
     method: "POST",
     headers: { authorization: `Bearer ${env.GITHUB_TOKEN}`, accept: "application/vnd.github+json", "content-type": "application/json", "x-github-api-version": "2022-11-28", "user-agent": "personal-ai-agent-engine" },
     body: JSON.stringify({ ref: "main", inputs: { task_id: task.task_id, task_text: task.task_text } })
   });
-  if (!response.ok) throw new Error(`GitHub workflow dispatch failed (${response.status}): ${(await response.text()).slice(0, 500)}`);
+  if (!response.ok) {
+    throw new Error(`GitHub workflow dispatch failed (HTTP ${response.status})`);
+  }
   await env.DB.prepare("UPDATE tasks SET status='dispatched', updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?").bind(task.task_id).run();
 }
 
@@ -46,11 +48,14 @@ export default {
       const task = body.task.trim();
       await env.DB.prepare("INSERT INTO tasks (id, task_text, status) VALUES (?, ?, 'queued')").bind(id, task).run();
       try { await env.TASK_QUEUE.send({ task_id: id, task_text: task }); }
-      catch (error) { await env.DB.prepare("UPDATE tasks SET status='failed', error=?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?").bind(String(error), id).run(); return json({ error: "Queue unavailable", task_id: id }, 503); }
+      catch (error) {
+        await env.DB.prepare("UPDATE tasks SET status='failed', error=?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?").bind(error instanceof Error ? error.message : "Queue unavailable", id).run();
+        return json({ error: "Queue unavailable", task_id: id }, 503);
+      }
       return json({ task_id: id, status: "queued" }, 202);
     }
 
-    const match = url.pathname.match(/^\/api\/tasks\/([0-9a-f-]{36})$/i);
+    const match = url.pathname.match(/^\\/api\\/tasks\\/([0-9a-f-]{36})$/i);
     if (request.method === "GET" && match) {
       const row = await env.DB.prepare("SELECT id, task_text, status, result, error, created_at, updated_at FROM tasks WHERE id=?").bind(match[1]).first();
       return row ? json(row) : json({ error: "Task not found" }, 404);
@@ -62,7 +67,7 @@ export default {
     for (const message of batch.messages) {
       try { await dispatchToGitHub(env, message.body); message.ack(); }
       catch (error) {
-        await env.DB.prepare("UPDATE tasks SET error=?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?").bind(String(error), message.body.task_id).run();
+        await env.DB.prepare("UPDATE tasks SET error=?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?").bind(error instanceof Error ? error.message : "Dispatch failed", message.body.task_id).run();
         message.retry();
       }
     }
