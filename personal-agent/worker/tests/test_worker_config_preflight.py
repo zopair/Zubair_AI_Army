@@ -34,6 +34,7 @@ class WorkerConfigPreflightTests(unittest.TestCase):
                 }],
                 "consumers": [{
                     "queue": "personal-agent-tasks",
+                    "max_batch_size": 1,
                     "max_retries": 3,
                 }],
             },
@@ -66,6 +67,11 @@ class WorkerConfigPreflightTests(unittest.TestCase):
         self.config["queues"]["consumers"][0]["queue"] = "wrong-queue"
         errors = validate_config(self.config, self.config_path, allow_placeholders=True)
         self.assertTrue(any("TASK_QUEUE producer does not match" in error for error in errors))
+
+    def test_rejects_queue_batches_larger_than_one_task(self):
+        self.config["queues"]["consumers"][0]["max_batch_size"] = 5
+        errors = validate_config(self.config, self.config_path, allow_placeholders=True)
+        self.assertTrue(any("max_batch_size must be 1" in error for error in errors))
 
     def test_rejects_missing_migrations_directory(self):
         self.config["d1_databases"][0]["migrations_dir"] = "missing"

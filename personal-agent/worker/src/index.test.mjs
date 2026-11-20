@@ -66,7 +66,7 @@ class MockDB {
         const cutoff = Date.now() - 20 * 60 * 1000;
         return { results: [...db.rows.values()].filter((row) =>
           ["queued", "dispatched"].includes(row.status) && Date.parse(row.updated_at) <= cutoff
-        ).map(({ id, operation, status }) => ({ id, operation, status })) };
+        ).slice(0, 20).map(({ id, operation, status }) => ({ id, operation, status })) };
       }
     });
     return {
@@ -465,4 +465,19 @@ test("queue acknowledges a currently dispatched duplicate while cron owns recove
   }
   assert.equal(acknowledged, true);
   assert.equal(fetchCalls, 0);
+});
+
+test("scheduled recovery caps one run at 20 tasks and 21 D1 queries", async () => {
+  const bindings = env();
+  for (let index = 0; index < 25; index += 1) {
+    const id = String(index + 1).padStart(8, "0") + "-1234-1234-1234-123456789012";
+    seedTask(bindings, id, "repository_inventory", "queued", new Date(Date.now() - 25 * 60 * 1000).toISOString());
+  }
+
+  await worker.scheduled({ cron: "*/5 * * * *" }, bindings);
+
+  assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 20);
+  assert.equal(bindings.DB.calls.filter((call) => /SELECT id, operation FROM tasks/.test(call.sql)).length, 1);
+  assert.equal(bindings.DB.calls.filter((call) => /UPDATE tasks SET status='queued'/.test(call.sql)).length, 20);
+  assert.equal(bindings.DB.calls.length, 21);
 });

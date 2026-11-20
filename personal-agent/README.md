@@ -8,13 +8,13 @@ A private, single-owner task-processing prototype inside `zopair/Zubair_AI_Army`
 
 - Cloudflare Worker exposes a small authenticated task API.
 - D1 stores task status, results, stable error codes, and idempotency state.
-- Cloudflare Queue dispatches allowlisted work with an atomic `queued` → `dispatched` claim; duplicate deliveries for already claimed or terminal tasks are acknowledged without repeating repository reads.
+- Cloudflare Queue dispatches allowlisted work with an atomic `queued` → `dispatched` claim; `max_batch_size = 1` gives each task its own Worker invocation, keeping its 50 GitHub requests within the Workers Free external-subrequest ceiling. Duplicate deliveries for already claimed or terminal tasks are acknowledged without repeating repository reads.
 - A five-minute Cron Trigger recovers queued/dispatched tasks older than 20 minutes, covering lost deliveries and worker interruptions.
 - The executor uses a small explicit capability registry and currently supports only:
   - `repository_inventory`
   - `repository_documentation_audit`
 - Both operations read GitHub repository metadata and Git tree data. They do not read file contents, execute shell commands, modify repositories, or invoke an LLM.
-- GitHub API calls have a 10-second timeout and classify rate limits, server failures, and network failures for bounded queue retry.
+- GitHub API calls have a 10-second timeout, disable automatic redirects, and classify rate limits, server failures, and network failures for bounded queue retry. The shared 50-request ceiling therefore also stays within the Workers Free external-subrequest cap.\n- Stale recovery scans at most 20 tasks per scheduled invocation (one D1 read plus at most 20 conditional updates), below the D1 Free per-invocation query ceiling.
 
 Both registered capabilities are read-only and require no approval because they do not modify external state. Unknown operations are rejected. Any future write-capable capability must introduce an explicit approval path before it can be registered. Do not expand the registry to arbitrary shell, Python, or model-generated code.
 
