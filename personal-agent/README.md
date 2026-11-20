@@ -70,7 +70,13 @@ Returns the persisted task fields, including status, result and error where pres
 
 ## Configuration and deployment gate
 
-The Worker configuration is in `worker/wrangler.toml`. Run the strict deployment preflight from the repository root before deployment:\n\n```bash\npython scripts/ci/preflight_worker_config.py\n```\n\nThe checked-in template intentionally fails strict mode while the D1 ID is a placeholder. CI runs `python scripts/ci/preflight_worker_config.py --allow-placeholders` to validate structure only; that mode is not deployment approval. Before any deployment:
+The Worker configuration is in `worker/wrangler.toml`. Run the strict deployment preflight from the repository root before deployment:
+
+```bash
+python scripts/ci/preflight_worker_config.py
+```
+
+The checked-in template intentionally fails strict mode while the D1 ID is a placeholder. CI runs `python scripts/ci/preflight_worker_config.py --allow-placeholders` to validate structure only; that mode is not deployment approval. Before any deployment:
 
 1. Create and bind the required D1 database and Queue.
 2. Replace the `REPLACE_WITH_D1_DATABASE_ID` placeholder with the actual D1 database ID; strict preflight also validates its UUID format and the configured migration directory.
