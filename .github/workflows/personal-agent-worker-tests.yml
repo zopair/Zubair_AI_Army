@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "personal-agent/worker/**"
+      - "scripts/ci/preflight_worker_config.py"
       - ".github/workflows/personal-agent-worker-tests.yml"
   push:
     branches: [main]
@@ -28,6 +29,8 @@ jobs:
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.11'
+      - name: Validate Worker configuration template
+        run: python ../../scripts/ci/preflight_worker_config.py --allow-placeholders
       - name: Validate D1 migration with SQLite
         run: python -m unittest discover -s tests -v
       - name: Setup Node.js
