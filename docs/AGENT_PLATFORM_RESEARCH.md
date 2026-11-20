@@ -128,7 +128,8 @@ Cloudflare Free limits relevant to this design: 50 external subrequests per Work
 
 ### Phase B — bounded execution
 - [x] Enforce a shared 50-request budget and stop on GitHub rate limits.
-- [x] Prevent automatic redirects from bypassing the external-request budget.\n- [x] Set Queue max_batch_size=1 so the 50-request task budget fits one Workers Free invocation.
+- [x] Prevent automatic redirects from bypassing the external-request budget.
+- [x] Set Queue max_batch_size=1 so the 50-request task budget fits one Workers Free invocation.
 - [x] Add optional task idempotency and a 20-per-60-second single-owner intake cap.
 - [x] Persist stable task error codes for rate limits, budget exhaustion and queue failures.
 - [x] Add atomic queue claims, duplicate-delivery suppression and scheduled stale-task recovery.
