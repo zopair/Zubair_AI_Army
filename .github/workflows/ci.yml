@@ -26,6 +26,14 @@ on:
       - "v1_production/**"
       - "scripts/ci/**"
       - "ARCHITECTURE.md"
+      - "app/**"
+      - "infra/fabric/**"
+      - "platform/**"
+      - "revenue/**"
+      - "marketplace/**"
+      - "prisma/**"
+      - "package.json"
+      - "tsconfig.json"
       - ".github/workflows/ci.yml"
 
 permissions:
