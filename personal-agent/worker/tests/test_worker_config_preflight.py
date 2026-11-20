@@ -59,12 +59,12 @@ class WorkerConfigPreflightTests(unittest.TestCase):
     def test_rejects_secrets_in_plaintext_vars(self):
         self.config["vars"]["API_TOKEN"] = "do-not-commit"
         errors = validate_config(self.config, self.config_path, allow_placeholders=True)
-        self.assertTrue(any("must be configured as Worker secrets" in error for error in errors))
+        self.assertTrue(any("must be configured as a Worker secret" in error for error in errors))
 
     def test_rejects_queue_producer_consumer_mismatch(self):
         self.config["queues"]["consumers"][0]["queue"] = "wrong-queue"
         errors = validate_config(self.config, self.config_path, allow_placeholders=True)
-        self.assertTrue(any("does not match TASK_QUEUE producer" in error for error in errors))
+        self.assertTrue(any("TASK_QUEUE producer does not match" in error for error in errors))
 
     def test_rejects_missing_migrations_directory(self):
         self.config["d1_databases"][0]["migrations_dir"] = "missing"
