@@ -37,6 +37,7 @@ class WorkerConfigPreflightTests(unittest.TestCase):
                     "max_retries": 3,
                 }],
             },
+            "triggers": {"crons": ["*/5 * * * *"]},
             "vars": {
                 "GITHUB_REPOSITORY": "zopair/Zubair_AI_Army",
             },
@@ -70,6 +71,11 @@ class WorkerConfigPreflightTests(unittest.TestCase):
         self.config["d1_databases"][0]["migrations_dir"] = "missing"
         errors = validate_config(self.config, self.config_path, allow_placeholders=True)
         self.assertTrue(any("migrations directory does not exist" in error for error in errors))
+
+    def test_rejects_missing_recovery_cron(self):
+        self.config["triggers"]["crons"] = []
+        errors = validate_config(self.config, self.config_path, allow_placeholders=True)
+        self.assertTrue(any("Cron Trigger is required" in error for error in errors))
 
     def test_rejects_invalid_repository_reference(self):
         self.config["vars"]["GITHUB_REPOSITORY"] = "not-a-repository"
