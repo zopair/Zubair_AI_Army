@@ -22,13 +22,33 @@ class MockDB {
           if (idempotencyKey && [...db.rows.values()].some((item) => item.idempotency_key === idempotencyKey)) {
             return { success: true, meta: { changes: 0 } };
           }
-          db.rows.set(id, { id, task_text: taskText, operation, idempotency_key: idempotencyKey, status: "queued" });
+          db.rows.set(id, { id, task_text: taskText, operation, idempotency_key: idempotencyKey, status: "queued", updated_at: new Date().toISOString() });
           return { success: true, meta: { changes: 1 } };
+        }
+        if (/UPDATE tasks SET status=\?/.test(sql)) {
+          const [status, result, error, errorCode, taskId] = values;
+          const row = db.rows.get(taskId);
+          if (row) Object.assign(row, { status, result, error, error_code: errorCode, updated_at: new Date().toISOString() });
+          return { success: true, meta: { changes: row ? 1 : 0 } };
         }
         return { success: true, meta: { changes: 1 } };
       },
       async first() {
         db.calls.push({ sql, values });
+        if (/UPDATE tasks SET status='dispatched'/.test(sql)) {
+          const row = db.rows.get(values[0]);
+          if (!row || row.status !== "queued") return null;
+          row.status = "dispatched";
+          row.updated_at = new Date().toISOString();
+          return { id: row.id };
+        }
+        if (/UPDATE tasks SET status='queued'/.test(sql) && sql.includes("updated_at <=")) {
+          const row = db.rows.get(values[0]);
+          if (!row || !["queued", "dispatched"].includes(row.status) || Date.parse(row.updated_at) > Date.now() - 20 * 60 * 1000) return null;
+          row.status = "queued";
+          row.updated_at = new Date().toISOString();
+          return { id: row.id };
+        }
         if (/INSERT INTO api_rate_limits/.test(sql)) {
           if (db.failRateLimit) throw new Error("D1 unavailable");
           if (db.rateLimitWindowStartedAt === null) db.rateLimitWindowStartedAt = Math.floor(Date.now() / 1000);
@@ -40,16 +60,25 @@ class MockDB {
         }
         if (sql.includes("WHERE id=?")) return db.rows.get(values[0]) || db.row;
         return db.row;
+      },
+      async all() {
+        db.calls.push({ sql, values: [] });
+        const cutoff = Date.now() - 20 * 60 * 1000;
+        return { results: [...db.rows.values()].filter((row) =>
+          ["queued", "dispatched"].includes(row.status) && Date.parse(row.updated_at) <= cutoff
+        ).map(({ id, operation, status }) => ({ id, operation, status })) };
       }
     });
     return {
       ...statement(),
-      bind(...values) {
-        return statement(values);
-      }
+      bind(...values) { return statement(values); }
     };
   }
 }
+function seedTask(bindings, id, operation, status = "queued", updatedAt = new Date().toISOString()) {
+  bindings.DB.rows.set(id, { id, operation, status, updated_at: updatedAt, created_at: updatedAt });
+}
+
 function env(overrides = {}) {
   const bindings = {
     DB: new MockDB(),
