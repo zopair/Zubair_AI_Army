@@ -46,9 +46,15 @@ export default {
     if (!authorized(request, env)) return json({ error: "Unauthorized" }, 401);
 
     if (request.method === "POST" && url.pathname === "/api/tasks") {
-      let body: { operation?: unknown };
+      let body: Record<string, unknown>;
       try {
-        body = await request.json();
+        const rawBody = await request.text();
+        if (rawBody.length > 1024) return json({ error: "Request body too large" }, 413);
+        const parsed: unknown = JSON.parse(rawBody);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+          return json({ error: "Request body must be a JSON object" }, 400);
+        }
+        body = parsed as Record<string, unknown>;
       } catch {
         return json({ error: "Invalid JSON" }, 400);
       }
