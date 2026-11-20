@@ -28,14 +28,17 @@ class MockDB {
 }
 
 function env(overrides = {}) {
-  return {
+  const bindings = {
     DB: new MockDB(),
-    TASK_QUEUE: { send: async (message) => { env.lastMessage = message; } },
     API_TOKEN: "test-api-token",
     GITHUB_TOKEN: "test-github-token",
     GITHUB_REPOSITORY: "zopair/Zubair_AI_Army",
     ...overrides
   };
+  bindings.TASK_QUEUE = {
+    send: async (message) => { bindings.lastMessage = message; }
+  };
+  return bindings;
 }
 
 function request(path, { method = "GET", body, token = "test-api-token" } = {}) {
@@ -71,8 +74,8 @@ test("task submission accepts only allowlisted operations and enqueues a typed m
   const payload = await response.json();
   assert.equal(payload.operation, "repository_inventory");
   assert.equal(payload.status, "queued");
-  assert.equal(env.lastMessage.operation, "repository_inventory");
-  assert.equal(env.lastMessage.task_id, payload.task_id);
+  assert.equal(bindings.lastMessage.operation, "repository_inventory");
+  assert.equal(bindings.lastMessage.task_id, payload.task_id);
   assert.match(bindings.DB.calls[0].sql, /INSERT INTO tasks/);
 });
 
@@ -101,7 +104,7 @@ test("task submission rejects malformed, oversized, and unsupported payloads", a
     body: JSON.stringify({ operation: "x".repeat(1100) })
   }), bindings);
   assert.equal(oversized.status, 413);
-  assert.equal(bindings.TASK_QUEUE.send ? true : false, true);
+  assert.equal(bindings.lastMessage, undefined);
 });
 
 test("all task routes reject missing or invalid bearer tokens", async () => {
