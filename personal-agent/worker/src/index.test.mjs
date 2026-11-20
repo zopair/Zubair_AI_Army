@@ -5,6 +5,7 @@ import worker from "./index.ts";
 class MockDB {
   constructor(row = null) {
     this.row = row;
+    this.rows = new Map(row ? [[row.id, row]] : []);
     this.calls = [];
   }
 
@@ -15,10 +16,22 @@ class MockDB {
         return {
           async run() {
             db.calls.push({ sql, values });
-            return { success: true };
+            if (/INSERT INTO tasks/.test(sql)) {
+              const [id, taskText, operation, idempotencyKey] = values;
+              if (idempotencyKey && [...db.rows.values()].some((item) => item.idempotency_key === idempotencyKey)) {
+                return { success: true, meta: { changes: 0 } };
+              }
+              db.rows.set(id, { id, task_text: taskText, operation, idempotency_key: idempotencyKey, status: "queued" });
+              return { success: true, meta: { changes: 1 } };
+            }
+            return { success: true, meta: { changes: 1 } };
           },
           async first() {
             db.calls.push({ sql, values });
+            if (/idempotency_key\s*=\s*\?/.test(sql)) {
+              return [...db.rows.values()].find((item) => item.idempotency_key === values[0]) || null;
+            }
+            if (/WHERE id=\?/.test(sql)) return db.rows.get(values[0]) || db.row;
             return db.row;
           }
         };
@@ -35,18 +48,20 @@ function env(overrides = {}) {
     GITHUB_REPOSITORY: "zopair/Zubair_AI_Army",
     ...overrides
   };
+  bindings.TASK_QUEUE_MESSAGES = [];
   bindings.TASK_QUEUE = {
-    send: async (message) => { bindings.lastMessage = message; }
+    send: async (message) => { bindings.lastMessage = message; bindings.TASK_QUEUE_MESSAGES.push(message); }
   };
   return bindings;
 }
 
-function request(path, { method = "GET", body, token = "test-api-token" } = {}) {
+function request(path, { method = "GET", body, token = "test-api-token", headers = {} } = {}) {
   return new Request(`https://worker.example${path}`, {
     method,
     headers: {
       ...(token ? { authorization: `Bearer ${token}` } : {}),
-      ...(body !== undefined ? { "content-type": "application/json" } : {})
+      ...(body !== undefined ? { "content-type": "application/json" } : {}),
+      ...headers
     },
     ...(body !== undefined ? { body } : {})
   });
@@ -169,4 +184,57 @@ test("queue execution persists completed result and acknowledges the message", a
   assert.equal(update.values[0], "completed");
   const result = JSON.parse(update.values[1]);
   assert.equal(result.tracked_file_count, 2);
+});
+
+test("idempotency key returns the original queued task without a second queue message", async () => {
+  const bindings = env();
+  const first = await worker.fetch(request("/api/tasks", {
+    method: "POST",
+    headers: { "idempotency-key": "request-12345" },
+    body: JSON.stringify({ operation: "repository_inventory" })
+  }), bindings);
+  const firstPayload = await first.json();
+
+  const second = await worker.fetch(request("/api/tasks", {
+    method: "POST",
+    headers: { "idempotency-key": "request-12345" },
+    body: JSON.stringify({ operation: "repository_inventory" })
+  }), bindings);
+  const secondPayload = await second.json();
+
+  assert.equal(first.status, 202);
+  assert.equal(second.status, 200);
+  assert.equal(secondPayload.task_id, firstPayload.task_id);
+  assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 1);
+});
+
+test("idempotency key cannot be reused for a different operation", async () => {
+  const bindings = env();
+  await worker.fetch(request("/api/tasks", {
+    method: "POST",
+    headers: { "idempotency-key": "request-12345" },
+    body: JSON.stringify({ operation: "repository_inventory" })
+  }), bindings);
+
+  const conflict = await worker.fetch(request("/api/tasks", {
+    method: "POST",
+    headers: { "idempotency-key": "request-12345" },
+    body: JSON.stringify({ operation: "repository_documentation_audit" })
+  }), bindings);
+
+  assert.equal(conflict.status, 409);
+  assert.deepEqual(await conflict.json(), { error: "Idempotency key already used for another operation" });
+});
+
+test("rejects malformed idempotency keys before writing or enqueueing", async () => {
+  const bindings = env();
+  const response = await worker.fetch(request("/api/tasks", {
+    method: "POST",
+    headers: { "idempotency-key": "bad key" },
+    body: JSON.stringify({ operation: "repository_inventory" })
+  }), bindings);
+
+  assert.equal(response.status, 400);
+  assert.equal(bindings.DB.calls.length, 0);
+  assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 0);
 });
