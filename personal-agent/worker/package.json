@@ -1,0 +1,8 @@
+{
+  "name": "personal-agent-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-strip-types --test src/*.test.mjs"
+  }
+}
