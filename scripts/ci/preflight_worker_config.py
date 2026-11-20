@@ -73,6 +73,13 @@ def validate_config(
         for item in consumers
     ):
         errors.append("TASK_QUEUE producer does not match a configured Queue consumer.")
+    else:
+        matching_consumers = [
+            item for item in consumers
+            if isinstance(item, dict) and item.get("queue") == task_producers[0]["queue"]
+        ]
+        if any(item.get("max_batch_size", 10) != 1 for item in matching_consumers):
+            errors.append("Queue max_batch_size must be 1 so each 50-request task gets its own Worker invocation.")
 
     triggers = config.get("triggers")
     triggers = triggers if isinstance(triggers, dict) else {}
