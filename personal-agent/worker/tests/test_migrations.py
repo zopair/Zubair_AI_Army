@@ -29,6 +29,8 @@ class WorkerMigrationTests(unittest.TestCase):
             }
             self.assertIn("idx_tasks_status_created_at", indexes)
             self.assertIn("idx_tasks_operation_created_at", indexes)
+            self.assertIn("idx_tasks_idempotency_key", indexes)
+            self.assertIn("idempotency_key", columns)
         finally:
             connection.close()
 
