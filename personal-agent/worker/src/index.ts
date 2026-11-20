@@ -1,5 +1,5 @@
 import { constantTimeBearerTokenMatches } from "./auth.js";
-import { ALLOWED_OPERATIONS, executeAllowlistedTask, RetryableTaskError } from "./task_executor.js";
+import { ALLOWED_OPERATIONS, executeAllowlistedTask, RateLimitExceededError, RequestBudgetExceededError, RetryableTaskError } from "./task_executor.js";
 
 export interface Env {
   DB: D1Database;
@@ -25,16 +25,24 @@ function authorized(request: Request, env: Env): boolean {
   return constantTimeBearerTokenMatches(request.headers.get("authorization"), env.API_TOKEN);
 }
 
+function taskErrorCode(error: unknown): string {
+  if (error instanceof RequestBudgetExceededError) return "GITHUB_REQUEST_BUDGET_EXCEEDED";
+  if (error instanceof RateLimitExceededError) return "GITHUB_RATE_LIMITED";
+  if (error instanceof RetryableTaskError) return "TRANSIENT_GITHUB_FAILURE";
+  return "TASK_EXECUTION_FAILED";
+}
+
 async function updateTask(
   env: Env,
   taskId: string,
   status: "queued" | "completed" | "failed",
   result: string | null,
-  error: string | null
+  error: string | null,
+  errorCode: string | null = null
 ): Promise<void> {
   await env.DB.prepare(
-    "UPDATE tasks SET status=?, result=?, error=?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?"
-  ).bind(status, result, error, taskId).run();
+    "UPDATE tasks SET status=?, result=?, error=?, error_code=?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?"
+  ).bind(status, result, error, errorCode, taskId).run();
 }
 
 export default {
@@ -135,7 +143,7 @@ export default {
       try {
         await env.TASK_QUEUE.send({ task_id: id, operation });
       } catch {
-        await updateTask(env, id, "failed", null, "Queue unavailable");
+        await updateTask(env, id, "failed", null, "Queue unavailable", "QUEUE_UNAVAILABLE");
         return json({ error: "Queue unavailable", task_id: id }, 503);
       }
 
@@ -145,7 +153,7 @@ export default {
     const match = url.pathname.match(/^\/api\/tasks\/([0-9a-f-]{36})$/i);
     if (request.method === "GET" && match) {
       const row = await env.DB.prepare(
-        "SELECT id, task_text, operation, status, result, error, created_at, updated_at FROM tasks WHERE id=?"
+        "SELECT id, task_text, operation, status, result, error, error_code, created_at, updated_at FROM tasks WHERE id=?"
       ).bind(match[1]).first();
       return row ? json(row) : json({ error: "Task not found" }, 404);
     }
@@ -164,13 +172,13 @@ export default {
         const retryable = error instanceof RetryableTaskError;
         const attemptsExhausted = message.attempts >= 3;
         if (retryable && !attemptsExhausted) {
-          await updateTask(env, taskId, "queued", null, "Temporary GitHub API failure; retry scheduled");
+          await updateTask(env, taskId, "queued", null, "Temporary GitHub API failure; retry scheduled", "TRANSIENT_GITHUB_FAILURE");
           message.retry({ delaySeconds: 30 });
           continue;
         }
 
         const safeMessage = error instanceof Error ? error.message : "Task execution failed";
-        await updateTask(env, taskId, "failed", null, safeMessage);
+        await updateTask(env, taskId, "failed", null, safeMessage, taskErrorCode(error));
         message.ack();
       }
     }
