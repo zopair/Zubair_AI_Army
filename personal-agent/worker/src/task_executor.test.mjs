@@ -110,3 +110,47 @@ test("rejects invalid repository configuration before any network request", asyn
   );
   assert.equal(called, false);
 });
+
+test("recovers the complete inventory when GitHub truncates the recursive tree", async () => {
+  const requestedUrls = [];
+  const fetchImpl = async (url) => {
+    const parsed = new URL(String(url));
+    requestedUrls.push(parsed.pathname + parsed.search);
+
+    if (parsed.pathname === "/repos/zopair/Zubair_AI_Army") {
+      return response({ default_branch: "main" });
+    }
+    if (parsed.pathname.endsWith("/git/trees/main") && parsed.search === "?recursive=1") {
+      return response({
+        sha: "root-sha",
+        truncated: true,
+        tree: [{ path: "README.md", type: "blob" }]
+      });
+    }
+    if (parsed.pathname.endsWith("/git/trees/root-sha")) {
+      return response({
+        truncated: false,
+        tree: [
+          { path: "README.md", type: "blob" },
+          { path: "src", type: "tree", sha: "src-sha" }
+        ]
+      });
+    }
+    if (parsed.pathname.endsWith("/git/trees/src-sha")) {
+      return response({
+        truncated: false,
+        tree: [{ path: "index.ts", type: "blob" }]
+      });
+    }
+    throw new Error(`Unexpected GitHub API request: ${parsed.pathname}${parsed.search}`);
+  };
+
+  const result = await executeAllowlistedTask("repository_inventory", env, fetchImpl);
+
+  assert.equal(result.tracked_file_count, 2);
+  assert.deepEqual(result.top_level_directories, ["src"]);
+  assert.equal(result.tree_truncated, false);
+  assert.equal(result.tree_recovered_from_truncation, true);
+  assert.ok(requestedUrls.some((url) => url.endsWith("/git/trees/root-sha")));
+  assert.ok(requestedUrls.some((url) => url.endsWith("/git/trees/src-sha")));
+});
