@@ -67,7 +67,7 @@ export default {
       }
 
       const idempotencyKey = request.headers.get("idempotency-key");
-      if (idempotencyKey !== null && !/^[\\x21-\\x7E]{8,128}$/.test(idempotencyKey)) {
+      if (idempotencyKey !== null && !/^[\x21-\x7E]{8,128}$/.test(idempotencyKey)) {
         return json({ error: "Invalid Idempotency-Key header" }, 400);
       }
 
