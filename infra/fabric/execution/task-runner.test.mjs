@@ -1,6 +1,5 @@
-import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
-import test from 'node:test';
+import { describe, expect, it } from 'vitest';
 import { runTask } from './task-runner.mjs';
 
 function fakeChild({ output = '', closeCode = 0 } = {}) {
@@ -22,67 +21,60 @@ function fakeChild({ output = '', closeCode = 0 } = {}) {
   return child;
 }
 
-test('runs a fixed operation without accepting caller command or arguments', async () => {
-  let invocation;
-  const result = await runTask({
-    operation: 'node_version',
-    command: 'bash',
-    args: ['-lc', 'echo unsafe'],
-    env: { SECRET_TOKEN: 'must-not-pass' },
-    spawnImpl: (command, args, options) => {
-      invocation = { command, args, options };
-      return fakeChild({ output: 'v22.0.0' });
-    }
+describe('bounded task runner', () => {
+  it('runs a fixed operation without accepting caller command or arguments', async () => {
+    let invocation;
+    const result = await runTask({
+      operation: 'node_version',
+      command: 'bash',
+      args: ['-lc', 'echo unsafe'],
+      env: { SECRET_TOKEN: 'must-not-pass' },
+      spawnImpl: (command, args, options) => {
+        invocation = { command, args, options };
+        return fakeChild({ output: 'v22.0.0' });
+      }
+    });
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe('v22.0.0');
+    expect(invocation.command).toBe('node');
+    expect(invocation.args).toEqual(['--version']);
+    expect(invocation.options.shell).toBe(false);
+    expect(invocation.options.env.SECRET_TOKEN).toBeUndefined();
   });
 
-  assert.equal(result.code, 0);
-  assert.equal(result.stdout, 'v22.0.0');
-  assert.equal(invocation.command, 'node');
-  assert.deepEqual(invocation.args, ['--version']);
-  assert.equal(invocation.options.shell, false);
-  assert.equal(invocation.options.env.SECRET_TOKEN, undefined);
-});
-
-test('rejects unregistered operations before spawning a process', async () => {
-  let spawned = false;
-  await assert.rejects(
-    runTask({
+  it('rejects unregistered operations before spawning a process', async () => {
+    let spawned = false;
+    await expect(runTask({
       operation: 'arbitrary-command',
       spawnImpl: () => { spawned = true; }
-    }),
-    /operation not allowed/
-  );
-  assert.equal(spawned, false);
-});
+    })).rejects.toThrow(/operation not allowed/);
+    expect(spawned).toBe(false);
+  });
 
-test('terminates a task that exceeds its execution timeout', async () => {
-  let child;
-  await assert.rejects(
-    runTask({
+  it('terminates a task that exceeds its execution timeout', async () => {
+    let child;
+    await expect(runTask({
       operation: 'node_version',
       timeoutMs: 10,
       spawnImpl: () => {
         child = fakeChild();
         return child;
       }
-    }),
-    /timed out/
-  );
-  assert.ok(child.killedWith.includes('SIGTERM'));
-});
+    })).rejects.toThrow(/timed out/);
+    expect(child.killedWith).toContain('SIGTERM');
+  });
 
-test('terminates a task that exceeds the combined output limit', async () => {
-  let child;
-  await assert.rejects(
-    runTask({
+  it('terminates a task that exceeds the combined output limit', async () => {
+    let child;
+    await expect(runTask({
       operation: 'node_version',
       maxOutputBytes: 4,
       spawnImpl: () => {
         child = fakeChild({ output: '12345' });
         return child;
       }
-    }),
-    /output limit/
-  );
-  assert.ok(child.killedWith.includes('SIGTERM'));
+    })).rejects.toThrow(/output limit/);
+    expect(child.killedWith).toContain('SIGTERM');
+  });
 });
