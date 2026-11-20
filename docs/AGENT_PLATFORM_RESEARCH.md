@@ -102,7 +102,7 @@ The current two-operation allowlist is safer and cheaper than a general-purpose 
 |---|---|---|---|
 | P0 | `personal-agent/README.md` API contract was stale | Users could send unsupported requests | **Corrected on this branch** to match the actual `operation` allowlist and clearly label manual dispatch as record-only |
 | P0 | D1 database ID is a placeholder | Worker cannot be deployed with the committed config unchanged | Keep placeholder out of claims; document exact provisioning/configuration gate |
-| P1 | Tree fallback permits up to 1,000 tree-object reads | A large repository can consume excessive API requests | Introduce a single per-task GitHub request budget (initial target: 50 total requests) and stop with an explicit incomplete/error result before the budget is exceeded |
+| P1 | Tree fallback previously permitted up to 1,000 tree-object reads | A large repository could consume excessive API requests | **Implemented on this branch:** one 50-request budget is shared across metadata, recursive-tree and fallback-tree calls; budget exhaustion fails before request 51 |
 | P1 | No visible task idempotency key | Client retries can create duplicate tasks | Add a client-supplied request key with a unique D1 constraint and deterministic duplicate response |
 | P1 | No visible intake rate limit | A leaked bearer token can create excessive work | Add a simple bounded limiter before any queue send; do not rely on the secret alone |
 | P1 | Documentation claims can overstate execution | A task-record workflow is not an autonomous executor | Label each workflow as record-only or executable and report verified capabilities only |
@@ -132,8 +132,9 @@ The 50-request ceiling is a proposed application-level budget, not a GitHub plat
 - [ ] Keep all secrets out of source, logs, PWA assets and artifacts.
 
 ### Phase B — bounded execution
-- [ ] Replace the 1,000-tree-object-only guard with a shared 50-request task budget.
-- [ ] Add tests for budget exhaustion, rate-limit stop behavior and incomplete inventory reporting.
+- [x] Replace the 1,000-tree-object-only guard with a shared 50-request task budget.
+- [x] Add tests for budget exhaustion and rate-limit stop behavior. The budget test asserts exactly 50 outbound calls.
+- [ ] Add an explicit task result/diagnostic contract for budget exhaustion so callers can distinguish an intentionally stopped inventory from other failures.
 - [ ] Add idempotency to task intake and queue dispatch.
 - [ ] Verify queue retry/ack behavior against Cloudflare's documented semantics.
 
