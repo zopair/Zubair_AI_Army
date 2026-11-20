@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   ALLOWED_OPERATIONS,
+  CAPABILITY_REGISTRY,
   executeAllowlistedTask,
   RateLimitExceededError,
   RequestBudgetExceededError
@@ -21,6 +22,10 @@ test("only exposes fixed, allowlisted operations", () => {
     "repository_inventory",
     "repository_documentation_audit"
   ]);
+  assert.deepEqual(Object.keys(CAPABILITY_REGISTRY), ALLOWED_OPERATIONS);
+  assert.ok(Object.values(CAPABILITY_REGISTRY).every((capability) =>
+    capability.access === "read" && capability.requiresApproval === false
+  ));
 });
 
 test("repository inventory returns bounded metadata without file contents", async () => {

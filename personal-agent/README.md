@@ -9,13 +9,13 @@ A private, single-owner task-processing prototype inside `zopair/Zubair_AI_Army`
 - Cloudflare Worker exposes a small authenticated task API.
 - D1 stores task status and results.
 - Cloudflare Queue dispatches allowlisted work.
-- The executor currently supports only:
+- The executor uses a small explicit capability registry and currently supports only:
   - `repository_inventory`
   - `repository_documentation_audit`
 - Both operations read GitHub repository metadata and Git tree data. They do not read file contents, execute shell commands, modify repositories, or invoke an LLM.
 - GitHub API calls have a 10-second timeout and classify rate limits, server failures, and network failures for bounded queue retry.
 
-Unknown operations are rejected. Do not expand the allowlist to arbitrary shell, Python, or model-generated code.
+Both registered capabilities are read-only and require no approval because they do not modify external state. Unknown operations are rejected. Any future write-capable capability must introduce an explicit approval path before it can be registered. Do not expand the registry to arbitrary shell, Python, or model-generated code.
 
 ## Actual API contract
 
@@ -60,7 +60,7 @@ A new successful submission returns HTTP `202` with `task_id`, `operation`, and 
 GET /api/tasks/<uuid>
 ```
 
-Returns the persisted task fields, including status, result and error where present.
+Returns the persisted task fields, including status, result, error and a stable `error_code` where present. Terminal diagnostics currently distinguish `GITHUB_RATE_LIMITED`, `GITHUB_REQUEST_BUDGET_EXCEEDED`, `TRANSIENT_GITHUB_FAILURE`, `QUEUE_UNAVAILABLE`, and generic `TASK_EXECUTION_FAILED` outcomes. Clients should branch on `error_code`, not parse the human-readable `error` message.
 
 ## Separate GitHub Actions workflow
 
