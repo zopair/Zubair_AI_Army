@@ -15,6 +15,8 @@ class WorkerConfigPreflightTests(unittest.TestCase):
         self.addCleanup(self.temp_dir.cleanup)
         self.config_path = Path(self.temp_dir.name) / "wrangler.toml"
         (Path(self.temp_dir.name) / "migrations").mkdir()
+        (Path(self.temp_dir.name) / "src").mkdir()
+        (Path(self.temp_dir.name) / "src" / "index.ts").write_text("export default {};", encoding="utf-8")
         self.config = {
             "name": "personal-ai-agent-engine",
             "main": "src/index.ts",
