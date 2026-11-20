@@ -93,16 +93,21 @@ export default {
       let rateLimit;
       try {
         rateLimit = await env.DB.prepare(
-          "INSERT INTO api_rate_limits (bucket, window_started_at, request_count) VALUES ('task_submission', unixepoch(), 1) ON CONFLICT(bucket) DO UPDATE SET request_count = CASE WHEN api_rate_limits.window_started_at <= unixepoch() - 60 THEN 1 ELSE MIN(api_rate_limits.request_count + 1, 21) END, window_started_at = CASE WHEN api_rate_limits.window_started_at <= unixepoch() - 60 THEN unixepoch() ELSE api_rate_limits.window_started_at END RETURNING request_count"
+          "INSERT INTO api_rate_limits (bucket, window_started_at, request_count) VALUES ('task_submission', unixepoch(), 1) ON CONFLICT(bucket) DO UPDATE SET request_count = CASE WHEN api_rate_limits.window_started_at <= unixepoch() - 60 THEN 1 ELSE MIN(api_rate_limits.request_count + 1, 21) END, window_started_at = CASE WHEN api_rate_limits.window_started_at <= unixepoch() - 60 THEN unixepoch() ELSE api_rate_limits.window_started_at END RETURNING request_count, window_started_at"
         ).first();
       } catch {
         return json({ error: "Task intake limiter unavailable" }, 503);
       }
 
-      if (!rateLimit || rateLimit.request_count > 20) {
+      if (!rateLimit || typeof rateLimit.request_count !== "number" || typeof rateLimit.window_started_at !== "number") {
+        return json({ error: "Task intake limiter unavailable" }, 503);
+      }
+
+      if (rateLimit.request_count > 20) {
+        const elapsedSeconds = Math.floor(Date.now() / 1000) - rateLimit.window_started_at;
         return json({
           error: "Task submission rate limit exceeded",
-          retry_after_seconds: 60
+          retry_after_seconds: Math.max(1, 60 - elapsedSeconds)
         }, 429);
       }
 
