@@ -66,11 +66,32 @@ export default {
         }, 400);
       }
 
+      const idempotencyKey = request.headers.get("idempotency-key");
+      if (idempotencyKey !== null && !/^[\\x21-\\x7E]{8,128}$/.test(idempotencyKey)) {
+        return json({ error: "Invalid Idempotency-Key header" }, 400);
+      }
+
       const id = crypto.randomUUID();
       const operation = body.operation;
-      await env.DB.prepare(
-        "INSERT INTO tasks (id, task_text, operation, status) VALUES (?, ?, ?, 'queued')"
-      ).bind(id, operation, operation).run();
+      const insert = await env.DB.prepare(
+        "INSERT INTO tasks (id, task_text, operation, idempotency_key, status) VALUES (?, ?, ?, ?, 'queued') ON CONFLICT(idempotency_key) DO NOTHING"
+      ).bind(id, operation, operation, idempotencyKey).run();
+
+      if (idempotencyKey !== null && insert.meta?.changes === 0) {
+        const existing = await env.DB.prepare(
+          "SELECT id, operation, status FROM tasks WHERE idempotency_key=?"
+        ).bind(idempotencyKey).first();
+
+        if (!existing) return json({ error: "Unable to resolve idempotent task request" }, 503);
+        if (existing.operation !== operation) {
+          return json({ error: "Idempotency key already used for another operation" }, 409);
+        }
+        return json({
+          task_id: existing.id,
+          operation: existing.operation,
+          status: existing.status
+        }, 200);
+      }
 
       try {
         await env.TASK_QUEUE.send({ task_id: id, operation });
