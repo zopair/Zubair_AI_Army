@@ -14,7 +14,7 @@ A private, single-owner task-processing prototype inside `zopair/Zubair_AI_Army`
   - `repository_inventory`
   - `repository_documentation_audit`
 - Both operations read GitHub repository metadata and Git tree data. They do not read file contents, execute shell commands, modify repositories, or invoke an LLM.
-- GitHub API calls have a 10-second timeout and classify rate limits, server failures, and network failures for bounded queue retry.
+- GitHub API calls have a 10-second timeout, disable automatic redirects, and classify rate limits, server failures, and network failures for bounded queue retry. The shared 50-request ceiling therefore also stays within the Workers Free external-subrequest cap.\n- Stale recovery scans at most 20 tasks per scheduled invocation (one D1 read plus at most 20 conditional updates), below the D1 Free per-invocation query ceiling.
 
 Both registered capabilities are read-only and require no approval because they do not modify external state. Unknown operations are rejected. Any future write-capable capability must introduce an explicit approval path before it can be registered. Do not expand the registry to arbitrary shell, Python, or model-generated code.
 
