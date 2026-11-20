@@ -4,7 +4,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-22%2B-339933.svg)](https://nodejs.org/)
 [![Status](https://img.shields.io/badge/Status-PoC%20%2F%20MVP-orange.svg)](#proof-of-concept--enterprise-customization-readiness)
 
-**A modular portfolio of AI-enabled product concepts, with an implemented Cloudflare task-intake and GitHub Actions dispatch prototype.**
+**A modular portfolio of AI-enabled product concepts, with a Cloudflare Worker that executes a small, explicit allowlist of read-only repository operations.**
 
 This repository contains multiple product tracks at different levels of maturity. The descriptions below distinguish implemented components from planned or incomplete work; a product label or roadmap entry is not evidence of a finished agent or production service.
 
@@ -14,7 +14,7 @@ AI product experiments often become fragmented across repositories, scripts, and
 
 ## Solution
 
-Zubair AI Army is a portfolio workspace for consolidating product experiments and reusable automation components. Its current executable slice is a Cloudflare Worker that accepts bounded task requests, persists task metadata in D1, queues dispatch, and triggers a GitHub Actions workflow.
+Zubair AI Army is a portfolio workspace for consolidating product experiments and reusable automation components. Its current executable slice is a Cloudflare Worker that validates an allowlisted operation, stores it in D1, queues execution, reads repository metadata through the GitHub API, and persists a bounded JSON result.
 
 ## Current architecture
 
@@ -24,12 +24,13 @@ flowchart TD
     Worker --> Auth[Bearer Token Validation]
     Auth --> D1[(Cloudflare D1)]
     Worker --> Queue[Cloudflare Queue]
-    Queue --> Dispatch[GitHub Workflow Dispatch]
-    Dispatch --> Runner[GitHub Actions Runner]
-    Runner --> Artifact[Short-lived Task Record Artifact]
+    Queue --> Allowlist[Fixed Read-only Task Executor]
+    Allowlist --> GitHub[GitHub REST API]
+    Allowlist --> D1
+    D1 --> Client
 ```
 
-**Important execution boundary:** the current GitHub Actions workflow stores the submitted task text as data and uploads a short-lived artifact. It does **not** execute arbitrary commands, call an LLM, or complete general-purpose AI tasks. The worker is a task-intake and dispatch scaffold, not yet a finished autonomous agent.
+**Execution boundary:** the executor accepts only `repository_inventory` and `repository_documentation_audit`. Both operations read repository metadata and tracked paths; they do not run user-supplied shell commands, modify repositories, or invoke an LLM. GitHub API rate limits and transient failures receive bounded queue retries.
 
 ## Portfolio status
 
@@ -39,7 +40,7 @@ flowchart TD
 | V2 — Intelligent Commerce | Commerce and pricing automation | Concept area; not verified as a complete product |
 | V3 — Sovereign Core | Shared agent and platform foundations | Partial experiments; requires component-level audit |
 | V4 — Elite Pro Builder | AI-enabled professional services | Incomplete prototype; do not treat as launch-ready |
-| Personal Agent Worker | Task intake, D1 persistence, queue, GitHub dispatch | Source implementation present; tests and migration included in this branch |
+| Personal Agent Worker | Task intake, D1 persistence, queue, allowlisted repository analysis | Implemented in this branch; execution tests and D1 migrations included |
 
 ## Quick start — Personal Agent Worker
 
@@ -48,7 +49,7 @@ flowchart TD
 - Cloudflare account with Workers, D1, and Queues enabled
 - Node.js 22+
 - Wrangler CLI
-- A GitHub token or GitHub App token with permission to dispatch the configured workflow
+- A GitHub token or GitHub App token with read-only `Contents` access to the configured repository
 
 ### Configure
 
@@ -68,7 +69,7 @@ wrangler secret put API_TOKEN
 wrangler secret put GITHUB_TOKEN
 ```
 
-The non-secret `GITHUB_REPOSITORY` setting is declared in `wrangler.toml`. Verify that the GitHub token can dispatch `.github/workflows/personal-agent.yml`.
+The non-secret `GITHUB_REPOSITORY` setting is declared in `wrangler.toml`. The GitHub token is used only for read-only repository metadata and Git tree requests.
 
 ### Run locally and deploy
 
@@ -82,8 +83,8 @@ wrangler deploy
 ### API contract
 
 - `GET /health` — unauthenticated liveness response.
-- `POST /api/tasks` — accepts JSON `{"task":"..."}`, requires `Authorization: Bearer <API_TOKEN>`, and enforces a 1–4000 character task limit.
-- `GET /api/tasks/{task_id}` — returns the persisted task record and requires the same bearer token.
+- `POST /api/tasks` — accepts JSON `{"operation":"repository_inventory"}` or `{"operation":"repository_documentation_audit"}`, requires `Authorization: Bearer <API_TOKEN>`, and rejects every operation outside this fixed allowlist.
+- `GET /api/tasks/{task_id}` — returns the persisted task record, typed operation, execution status, and JSON result; requires the same bearer token.
 
 Do not expose this prototype publicly without rate limiting, abuse controls, an operational error policy, and a reviewed authorization model.
 
@@ -97,24 +98,24 @@ npm test
 python -m unittest discover -s tests -v
 ```
 
-The tests cover bearer-token matching and the D1 schema migration. They do not replace Cloudflare deployment tests or a live GitHub dispatch integration test.
+The tests cover bearer-token matching, allowlist enforcement, GitHub API retry classification, repository inventory and documentation audit behavior, and all D1 schema migrations. They do not replace a live Cloudflare deployment test.
 
 ## Proof of Concept & Enterprise Customization Readiness
-
-
 
 | Area | Current status |
 |---|---|
 | Worker authentication | Fixed-work byte comparison helper; JavaScript runtime does not guarantee formal constant-time execution |
-| Task intake | Implemented with request validation and D1 persistence |
-| Queue dispatch | Implemented through Cloudflare Queue and GitHub workflow dispatch |
-| Task execution | Not implemented; workflow currently records task text only |
-| Durable result lifecycle | Partial; completion callback and terminal-state updates remain to be implemented |
-| Rate limiting and abuse protection | Not implemented |
+| Task intake | Implemented with strict operation allowlist and D1 persistence |
+| Queue execution | Implemented with bounded retries for transient GitHub API failures |
+| Supported operations | Repository inventory and documentation/CI evidence audit; read-only |
+| Result lifecycle | Results and terminal status persisted in D1 and returned by task lookup |
+| Arbitrary shell / write operations | Explicitly unsupported |
+| LLM execution | Not connected to a deployed inference endpoint; provider router exists separately |
+| Rate limiting and abuse protection | API-level rate limiting remains to be added |
 | Enterprise identity / tenant isolation | Not implemented |
 | Product tracks V1–V4 | Mixed maturity; require separate audits and acceptance criteria |
 
-**Release posture:** Proof of Concept / MVP. Do not market the repository as a complete multi-agent system or deploy it as a production autonomous executor until the execution engine, authorization, rate limits, durable task lifecycle, observability, and end-to-end tests are implemented.
+**Release posture:** Proof of Concept / MVP. The worker can now execute bounded read-only repository tasks. It is not a general-purpose autonomous agent and should not be exposed publicly until rate limiting, abuse controls, tenant isolation, operational monitoring, and deployment-level tests are added.
 
 ## Roadmap
 
