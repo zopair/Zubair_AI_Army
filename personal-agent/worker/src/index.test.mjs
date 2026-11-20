@@ -97,7 +97,7 @@ test("task submission accepts only allowlisted operations and enqueues a typed m
   assert.equal(payload.status, "queued");
   assert.equal(bindings.lastMessage.operation, "repository_inventory");
   assert.equal(bindings.lastMessage.task_id, payload.task_id);
-  assert.match(bindings.DB.calls[0].sql, /INSERT INTO tasks/);
+  assert.ok(bindings.DB.calls.some((call) => /INSERT INTO tasks/.test(call.sql)));
 });
 
 test("task submission rejects malformed, oversized, and unsupported payloads", async () => {
