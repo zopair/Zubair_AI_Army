@@ -98,6 +98,7 @@ test("task submission accepts only allowlisted operations and enqueues a typed m
   assert.equal(response.status, 202);
   const payload = await response.json();
   assert.equal(payload.operation, "repository_inventory");
+  assert.equal(payload.error_code, null);
   assert.equal(payload.status, "queued");
   assert.equal(bindings.lastMessage.operation, "repository_inventory");
   assert.equal(bindings.lastMessage.task_id, payload.task_id);
@@ -149,7 +150,8 @@ test("task lookup returns persisted operation and result", async () => {
       id: "12345678-1234-1234-1234-123456789012",
       operation: "repository_inventory",
       status: "completed",
-      result: JSON.stringify({ tracked_file_count: 3 })
+      result: JSON.stringify({ tracked_file_count: 3 }),
+      error_code: null
     })
   });
   const response = await worker.fetch(request("/api/tasks/12345678-1234-1234-1234-123456789012"), bindings);
@@ -295,4 +297,77 @@ test("task intake fails closed when the D1 rate limiter is unavailable", async (
   assert.equal(response.status, 503);
   assert.deepEqual(await response.json(), { error: "Task intake limiter unavailable" });
   assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 0);
+});
+
+test("queue persists a stable error code when GitHub rate limits a task", async () => {
+  const bindings = env();
+  const originalFetch = globalThis.fetch;
+  let fetchCall = 0;
+  globalThis.fetch = async () => {
+    fetchCall += 1;
+    if (fetchCall === 1) return new Response(JSON.stringify({ default_branch: "main" }));
+    return new Response("{}", { status: 429 });
+  };
+
+  let acknowledged = false;
+  try {
+    await worker.queue({
+      messages: [{
+        body: { task_id: "12345678-1234-1234-1234-123456789012", operation: "repository_inventory" },
+        attempts: 1,
+        ack() { acknowledged = true; },
+        retry() { throw new Error("Rate-limited tasks must not retry"); }
+      }]
+    }, bindings);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  const update = bindings.DB.calls.find((call) => /UPDATE tasks/.test(call.sql));
+  assert.equal(acknowledged, true);
+  assert.ok(update);
+  assert.equal(update.values[0], "failed");
+  assert.equal(update.values[3], "GITHUB_RATE_LIMITED");
+});
+
+test("queue records request-budget exhaustion as a distinct terminal diagnostic", async () => {
+  const bindings = env();
+  const originalFetch = globalThis.fetch;
+  let fetchCall = 0;
+  globalThis.fetch = async () => {
+    fetchCall += 1;
+    if (fetchCall === 1) return new Response(JSON.stringify({ default_branch: "main" }));
+    if (fetchCall === 2) return new Response(JSON.stringify({ truncated: true, sha: "root-sha", tree: [] }));
+    if (fetchCall === 3) {
+      return new Response(JSON.stringify({
+        truncated: false,
+        tree: Array.from({ length: 60 }, (_, index) => ({
+          path: `directory-${index}`,
+          type: "tree",
+          sha: `tree-${index}`
+        }))
+      }));
+    }
+    return new Response(JSON.stringify({ truncated: false, tree: [] }));
+  };
+
+  let acknowledged = false;
+  try {
+    await worker.queue({
+      messages: [{
+        body: { task_id: "12345678-1234-1234-1234-123456789012", operation: "repository_inventory" },
+        attempts: 1,
+        ack() { acknowledged = true; },
+        retry() { throw new Error("Budget exhaustion must not retry"); }
+      }]
+    }, bindings);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  const update = bindings.DB.calls.find((call) => /UPDATE tasks/.test(call.sql));
+  assert.equal(acknowledged, true);
+  assert.ok(update);
+  assert.equal(update.values[0], "failed");
+  assert.equal(update.values[3], "GITHUB_REQUEST_BUDGET_EXCEEDED");
 });
