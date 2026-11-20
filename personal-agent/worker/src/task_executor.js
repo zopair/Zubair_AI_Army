@@ -59,6 +59,56 @@ async function githubJson(env, path, fetchImpl) {
   }
 }
 
+const MAX_TREE_OBJECTS = 1000;
+
+async function recoverTreeFiles(env, owner, repository, rootTreeSha, fetchImpl) {
+  const encodedOwner = encodeURIComponent(owner);
+  const encodedRepository = encodeURIComponent(repository);
+  const pending = [{ sha: rootTreeSha, prefix: "" }];
+  const visited = new Set();
+  const files = [];
+
+  while (pending.length > 0) {
+    const current = pending.shift();
+    const visitKey = `${current.sha}:${current.prefix}`;
+    if (visited.has(visitKey)) continue;
+    visited.add(visitKey);
+
+    if (visited.size > MAX_TREE_OBJECTS) {
+      throw new Error("GitHub tree recovery exceeded the directory traversal limit");
+    }
+
+    const tree = await githubJson(
+      env,
+      `/repos/${encodedOwner}/${encodedRepository}/git/trees/${encodeURIComponent(current.sha)}`,
+      fetchImpl
+    );
+
+    if (!Array.isArray(tree.tree)) {
+      throw new Error("GitHub repository tree is unavailable during fallback traversal");
+    }
+    if (tree.truncated === true) {
+      throw new Error("GitHub returned a truncated directory tree during fallback traversal");
+    }
+
+    for (const entry of tree.tree) {
+      if (typeof entry.path !== "string" || !entry.path) continue;
+      const path = current.prefix ? `${current.prefix}/${entry.path}` : entry.path;
+
+      if (entry.type === "blob") {
+        files.push({ path, type: "blob" });
+      } else if (entry.type === "tree") {
+        if (typeof entry.sha !== "string" || !entry.sha) {
+          throw new Error("GitHub returned a directory without a tree SHA");
+        }
+        pending.push({ sha: entry.sha, prefix: path });
+      }
+    }
+  }
+
+  return files.sort((left, right) => left.path.localeCompare(right.path));
+}
+
 async function loadRepositoryTree(env, fetchImpl) {
   const [owner, repository] = parseRepository(env.GITHUB_REPOSITORY);
   const encodedOwner = encodeURIComponent(owner);
@@ -83,11 +133,22 @@ async function loadRepositoryTree(env, fetchImpl) {
     throw new Error("GitHub repository tree is unavailable");
   }
 
+  const recoveredFromTruncation = tree.truncated === true;
+  let files = tree.tree.filter((entry) => entry.type === "blob" && typeof entry.path === "string");
+
+  if (recoveredFromTruncation) {
+    if (typeof tree.sha !== "string" || !tree.sha) {
+      throw new Error("GitHub did not provide the truncated root tree SHA");
+    }
+    files = await recoverTreeFiles(env, owner, repository, tree.sha, fetchImpl);
+  }
+
   return {
     repository: `${owner}/${repository}`,
     default_branch: metadata.default_branch,
-    truncated: tree.truncated === true,
-    files: tree.tree.filter((entry) => entry.type === "blob" && typeof entry.path === "string")
+    truncated: false,
+    recoveredFromTruncation,
+    files
   };
 }
 
@@ -117,7 +178,8 @@ function repositoryInventory(snapshot) {
     tracked_file_count: snapshot.files.length,
     top_level_directories: [...directories].sort().slice(0, 30),
     file_extensions: summarizeExtensions(snapshot.files),
-    tree_truncated: snapshot.truncated
+    tree_truncated: snapshot.truncated,
+    tree_recovered_from_truncation: snapshot.recoveredFromTruncation
   };
 }
 
@@ -148,6 +210,7 @@ function documentationAudit(snapshot) {
     test_file_count: testFiles.length,
     docs_directory_present: [...paths].some((path) => path.startsWith("docs/")),
     tree_truncated: snapshot.truncated,
+    tree_recovered_from_truncation: snapshot.recoveredFromTruncation,
     recommendations: [
       ...(missingDocuments.includes("LICENSE") ? ["Choose and add an explicit repository license before external redistribution."] : []),
       ...(testFiles.length === 0 ? ["Add automated tests for the primary runtime paths."] : []),
