@@ -60,7 +60,8 @@ function request(path, { method = "GET", body, token = "test-api-token", headers
     method,
     headers: {
       ...(token ? { authorization: `Bearer ${token}` } : {}),
-      ...(body !== undefined ? { "content-type": "application/json" } : {}),\n      ...headers
+      ...(body !== undefined ? { "content-type": "application/json" } : {}),
+      ...headers
     },
     ...(body !== undefined ? { body } : {})
   });
