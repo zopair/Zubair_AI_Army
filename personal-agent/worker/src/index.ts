@@ -55,7 +55,7 @@ export default {
       return json({ task_id: id, status: "queued" }, 202);
     }
 
-    const match = url.pathname.match(/^\\/api\\/tasks\\/([0-9a-f-]{36})$/i);
+    const match = url.pathname.match(/^\/api\/tasks\/([0-9a-f-]{36})$/i);
     if (request.method === "GET" && match) {
       const row = await env.DB.prepare("SELECT id, task_text, status, result, error, created_at, updated_at FROM tasks WHERE id=?").bind(match[1]).first();
       return row ? json(row) : json({ error: "Task not found" }, 404);
