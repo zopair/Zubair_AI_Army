@@ -247,7 +247,7 @@ test("idempotency key returns the original queued task without a second queue me
   assert.equal(first.status, 202);
   assert.equal(second.status, 200);
   assert.equal(secondPayload.task_id, firstPayload.task_id);
-  assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 2);
+  assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 1);
 });
 
 test("idempotency key cannot be reused for a different operation", async () => {
@@ -436,7 +436,7 @@ test("scheduled recovery requeues only stale queued or dispatched tasks", async 
   seedTask(bindings, staleQueuedId, "repository_documentation_audit", "queued", new Date(Date.now() - 22 * 60 * 1000).toISOString());
   seedTask(bindings, recentId, "repository_documentation_audit", "dispatched");
   await worker.scheduled({ cron: "*/5 * * * *" }, bindings);
-  assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 1);
+  assert.equal(bindings.TASK_QUEUE_MESSAGES.length, 2);
   assert.deepEqual(bindings.TASK_QUEUE_MESSAGES[0], { task_id: staleId, operation: "repository_inventory" });
   assert.deepEqual(bindings.TASK_QUEUE_MESSAGES[1], { task_id: staleQueuedId, operation: "repository_documentation_audit" });
   assert.equal(bindings.DB.rows.get(staleId).status, "queued");
