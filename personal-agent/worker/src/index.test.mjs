@@ -221,7 +221,7 @@ test("queue execution persists completed result and acknowledges the message", a
 
   assert.equal(acknowledged, true);
   assert.equal(retried, false);
-  const update = bindings.DB.calls.find((call) => /UPDATE tasks/.test(call.sql));
+  const update = bindings.DB.calls.find((call) => call.sql.includes("SET status=?,"));
   assert.ok(update);
   assert.equal(update.values[0], "completed");
   const result = JSON.parse(update.values[1]);
