@@ -98,7 +98,6 @@ test("task submission accepts only allowlisted operations and enqueues a typed m
   assert.equal(response.status, 202);
   const payload = await response.json();
   assert.equal(payload.operation, "repository_inventory");
-  assert.equal(payload.error_code, null);
   assert.equal(payload.status, "queued");
   assert.equal(bindings.lastMessage.operation, "repository_inventory");
   assert.equal(bindings.lastMessage.task_id, payload.task_id);
@@ -159,6 +158,7 @@ test("task lookup returns persisted operation and result", async () => {
   const payload = await response.json();
   assert.equal(payload.status, "completed");
   assert.equal(payload.operation, "repository_inventory");
+  assert.equal(payload.error_code, null);
 });
 
 test("queue execution persists completed result and acknowledges the message", async () => {
