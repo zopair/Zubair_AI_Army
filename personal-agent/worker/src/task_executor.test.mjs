@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import {
   ALLOWED_OPERATIONS,
   executeAllowlistedTask,
-  RetryableTaskError
+  RetryableTaskError,
+  RateLimitExceededError,
+  RequestBudgetExceededError
 } from "./task_executor.js";
 
 const env = {
@@ -82,7 +84,7 @@ test("rejects unsupported operations without making external requests", async ()
   assert.equal(called, false);
 });
 
-test("classifies GitHub rate limiting as retryable", async () => {
+test("stops on GitHub rate limiting without scheduling a blind retry", async () => {
   let call = 0;
   const fetchImpl = async () => {
     call += 1;
@@ -92,7 +94,7 @@ test("classifies GitHub rate limiting as retryable", async () => {
 
   await assert.rejects(
     executeAllowlistedTask("repository_inventory", env, fetchImpl),
-    RetryableTaskError
+    RateLimitExceededError
   );
 });
 
@@ -153,4 +155,34 @@ test("recovers the complete inventory when GitHub truncates the recursive tree",
   assert.equal(result.tree_recovered_from_truncation, true);
   assert.ok(requestedUrls.some((url) => url.endsWith("/git/trees/root-sha")));
   assert.ok(requestedUrls.some((url) => url.endsWith("/git/trees/src-sha")));
+});
+
+
+test("enforces a shared 50-request budget across recursive tree recovery", async () => {
+  let calls = 0;
+  const childTrees = Array.from({ length: 60 }, (_, index) => ({
+    path: `dir-${index}`,
+    type: "tree",
+    sha: `tree-${index}`
+  }));
+  const fetchImpl = async (url) => {
+    calls += 1;
+    const parsed = new URL(String(url));
+    if (parsed.pathname === "/repos/zopair/Zubair_AI_Army") {
+      return response({ default_branch: "main" });
+    }
+    if (parsed.pathname.endsWith("/git/trees/main") && parsed.search === "?recursive=1") {
+      return response({ sha: "root-sha", truncated: true, tree: [] });
+    }
+    if (parsed.pathname.endsWith("/git/trees/root-sha")) {
+      return response({ truncated: false, tree: childTrees });
+    }
+    return response({ truncated: false, tree: [] });
+  };
+
+  await assert.rejects(
+    executeAllowlistedTask("repository_inventory", env, fetchImpl),
+    RequestBudgetExceededError
+  );
+  assert.equal(calls, 50);
 });
